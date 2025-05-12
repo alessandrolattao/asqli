@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build and Release
@@ -71,36 +74,34 @@ jobs:
             build/sqlai-windows-amd64-${{ env.VERSION }}.zip
           body: |
             # SQLAI v${{ env.VERSION }}
-            
+
             ## Installation
-            
+
             ### Linux (x86_64)
             ```
             tar -xzf sqlai-linux-amd64-${{ env.VERSION }}.tar.gz
             ./sqlai-linux-amd64
             ```
-            
+
             ### Linux (ARM64)
             ```
             tar -xzf sqlai-linux-arm64-${{ env.VERSION }}.tar.gz
             ./sqlai-linux-arm64
             ```
-            
+
             ### macOS (Intel)
             ```
             tar -xzf sqlai-darwin-amd64-${{ env.VERSION }}.tar.gz
             ./sqlai-darwin-amd64
             ```
-            
+
             ### macOS (Apple Silicon)
             ```
             tar -xzf sqlai-darwin-arm64-${{ env.VERSION }}.tar.gz
             ./sqlai-darwin-arm64
             ```
-            
+
             ### Windows
             ```
             # Extract the zip file and run sqlai-windows-amd64.exe
             ```
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

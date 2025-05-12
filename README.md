@@ -11,29 +11,56 @@ SQLAI is a command-line tool that generates SQL queries from natural language us
 
 ## Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/alessandrolattao/sqlai.git
+Download the pre-built binary for your platform from the [latest release](https://github.com/alessandrolattao/sqlai/releases/latest).
 
-# Build the project
-cd sqlai
-go build ./cmd/sqlai
+### Linux (x86_64)
+```bash
+tar -xzf sqlai-linux-amd64-X.Y.Z.tar.gz
+./sqlai-linux-amd64
+```
+
+### Linux (ARM64)
+```bash
+tar -xzf sqlai-linux-arm64-X.Y.Z.tar.gz
+./sqlai-linux-arm64
+```
+
+### macOS (Intel)
+```bash
+tar -xzf sqlai-darwin-amd64-X.Y.Z.tar.gz
+./sqlai-darwin-amd64
+```
+
+### macOS (Apple Silicon)
+```bash
+tar -xzf sqlai-darwin-arm64-X.Y.Z.tar.gz
+./sqlai-darwin-arm64
+```
+
+### Windows
+Extract the zip file and run `sqlai-windows-amd64.exe`.
+
+### From Source
+If you prefer to build from source:
+
+```bash
+go install github.com/alessandrolattao/sqlai/cmd/sqlai@latest
 ```
 
 ## Usage
 
 ```bash
 # Connect to a PostgreSQL database
-./sqlai --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+sqlai --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
 
 # Connect to a MySQL database
-./sqlai --dbtype mysql --host localhost --port 3306 --user myuser --password mypassword --db mydb
+sqlai --dbtype mysql --host localhost --port 3306 --user myuser --password mypassword --db mydb
 
 # Connect to a SQLite database
-./sqlai --dbtype sqlite --file path/to/database.db
+sqlai --dbtype sqlite --file path/to/database.db
 
 # Use a direct connection string
-./sqlai --dbtype postgres --connection "postgresql://user:password@localhost:5432/mydb?sslmode=disable"
+sqlai --dbtype postgres --connection "postgresql://user:password@localhost:5432/mydb?sslmode=disable"
 ```
 
 ### Connection Parameters

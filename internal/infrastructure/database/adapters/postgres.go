@@ -1,38 +1,39 @@
-package drivers
+package adapters
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
 
-	"github.com/alessandrolattao/sqlai/internal/pkg/database"
 	_ "github.com/lib/pq" // Import the PostgreSQL driver
 )
 
-// PostgreSQLAdapter implements the Adapter interface for PostgreSQL
-type PostgreSQLAdapter struct{}
+// PostgresAdapter implements the Adapter interface for PostgreSQL
+type PostgresAdapter struct{}
+
+// Ensure PostgresAdapter implements Adapter interface
+var _ Adapter = (*PostgresAdapter)(nil)
 
 // Connect establishes a connection to a PostgreSQL database
-func (a *PostgreSQLAdapter) Connect(config database.Config) (*sql.DB, error) {
-	var connStr string
-	
+func (a *PostgresAdapter) Connect(config Config) (*sql.DB, error) {
 	if config.ConnectionString != "" {
-		connStr = config.ConnectionString
-	} else {
-		sslMode := "disable"
-		if config.SSLMode != "" {
-			sslMode = config.SSLMode
-		}
-		
-		connStr = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-			config.Host, config.Port, config.User, config.Password, config.DBName, sslMode)
+		return sql.Open("postgres", config.ConnectionString)
 	}
-	
+
+	sslMode := "disable"
+	if config.SSLMode != "" {
+		sslMode = config.SSLMode
+	}
+
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		config.Host, config.Port, config.User, config.Password, config.DBName, sslMode)
+
 	return sql.Open("postgres", connStr)
 }
 
 // GetTableNames retrieves all table names from a PostgreSQL database
-func (a *PostgreSQLAdapter) GetTableNames(db *sql.DB) ([]string, error) {
+func (a *PostgresAdapter) GetTableNames(ctx context.Context, db *sql.DB) ([]string, error) {
 	query := `
 		SELECT table_name
 		FROM information_schema.tables
@@ -40,11 +41,11 @@ func (a *PostgreSQLAdapter) GetTableNames(db *sql.DB) ([]string, error) {
 		ORDER BY table_name
 	`
 
-	rows, err := db.Query(query)
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var tables []string
 	for rows.Next() {
@@ -59,7 +60,7 @@ func (a *PostgreSQLAdapter) GetTableNames(db *sql.DB) ([]string, error) {
 }
 
 // GetTableDefinition retrieves the definition of a specific PostgreSQL table
-func (a *PostgreSQLAdapter) GetTableDefinition(db *sql.DB, tableName string) (*database.TableDefinition, error) {
+func (a *PostgresAdapter) GetTableDefinition(ctx context.Context, db *sql.DB, tableName string) (*TableDefinition, error) {
 	// Get columns
 	columnsQuery := `
 		SELECT
@@ -86,26 +87,26 @@ func (a *PostgreSQLAdapter) GetTableDefinition(db *sql.DB, tableName string) (*d
 			c.ordinal_position
 	`
 
-	rows, err := db.Query(columnsQuery, tableName)
+	rows, err := db.QueryContext(ctx, columnsQuery, tableName)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
-	var columns []database.ColumnDefinition
+	var columns []ColumnDefinition
 	for rows.Next() {
-		var column database.ColumnDefinition
+		var column ColumnDefinition
 		var isNullable string
 		var defaultValue sql.NullString
 		var isPrimary bool
 		var isAutoIncr bool
 
 		if err := rows.Scan(
-			&column.Name, 
-			&column.Type, 
-			&isNullable, 
-			&defaultValue, 
-			&isPrimary, 
+			&column.Name,
+			&column.Type,
+			&isNullable,
+			&defaultValue,
+			&isPrimary,
 			&isAutoIncr,
 		); err != nil {
 			return nil, err
@@ -149,15 +150,15 @@ func (a *PostgreSQLAdapter) GetTableDefinition(db *sql.DB, tableName string) (*d
 			c.contype
 	`
 
-	constraintRows, err := db.Query(constraintsQuery, tableName)
+	constraintRows, err := db.QueryContext(ctx, constraintsQuery, tableName)
 	if err != nil {
 		return nil, err
 	}
-	defer constraintRows.Close()
+	defer func() { _ = constraintRows.Close() }()
 
-	var constraints []database.ConstraintDefinition
+	var constraints []ConstraintDefinition
 	for constraintRows.Next() {
-		var constraint database.ConstraintDefinition
+		var constraint ConstraintDefinition
 		if err := constraintRows.Scan(
 			&constraint.Name,
 			&constraint.Type,
@@ -169,7 +170,7 @@ func (a *PostgreSQLAdapter) GetTableDefinition(db *sql.DB, tableName string) (*d
 		constraints = append(constraints, constraint)
 	}
 
-	return &database.TableDefinition{
+	return &TableDefinition{
 		Name:        tableName,
 		Columns:     columns,
 		Constraints: constraints,
@@ -177,8 +178,8 @@ func (a *PostgreSQLAdapter) GetTableDefinition(db *sql.DB, tableName string) (*d
 }
 
 // GetDatabaseSchema retrieves schema information for all PostgreSQL tables
-func (a *PostgreSQLAdapter) GetDatabaseSchema(db *sql.DB) (string, error) {
-	tables, err := a.GetTableNames(db)
+func (a *PostgresAdapter) GetDatabaseSchema(ctx context.Context, db *sql.DB) (string, error) {
+	tables, err := a.GetTableNames(ctx, db)
 	if err != nil {
 		return "", err
 	}
@@ -187,7 +188,7 @@ func (a *PostgreSQLAdapter) GetDatabaseSchema(db *sql.DB) (string, error) {
 	schemaBuilder.WriteString("DATABASE SCHEMA:\n\n")
 
 	for _, tableName := range tables {
-		tableDef, err := a.GetTableDefinition(db, tableName)
+		tableDef, err := a.GetTableDefinition(ctx, db, tableName)
 		if err != nil {
 			return "", err
 		}

@@ -1,36 +1,36 @@
+// Package database provides database connection management and adapter abstraction.
 package database
 
 import (
 	"database/sql"
+	"errors"
+
+	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
 )
 
-// TableDefinition contains information about a database table
-type TableDefinition struct {
-	Name        string
-	Columns     []ColumnDefinition
-	Constraints []ConstraintDefinition
-}
+// Re-export types from adapters for convenience
+type (
+	DriverType           = adapters.DriverType
+	Config               = adapters.Config
+	TableDefinition      = adapters.TableDefinition
+	ColumnDefinition     = adapters.ColumnDefinition
+	ConstraintDefinition = adapters.ConstraintDefinition
+)
 
-// ColumnDefinition contains information about a table column
-type ColumnDefinition struct {
-	Name       string
-	Type       string
-	Nullable   bool
-	Default    string
-	IsPrimary  bool
-	IsAutoIncr bool
-}
+// Re-export constants
+const (
+	PostgreSQL = adapters.PostgreSQL
+	MySQL      = adapters.MySQL
+	SQLite     = adapters.SQLite
+)
 
-// ConstraintDefinition contains information about table constraints
-type ConstraintDefinition struct {
-	Name           string
-	Type           string  // PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK, etc.
-	Definition     string
-	ReferencedTable string
-	ReferencedColumns []string
-}
+// Errors
+var (
+	ErrUnsupportedDriver = errors.New("unsupported database driver")
+	ErrInvalidConfig     = errors.New("invalid database configuration")
+	ErrConnectionFailed  = errors.New("database connection failed")
+)
 
-// Common query execution code that works across database types
 // ExecuteQuery runs a SQL query and returns the result in a tabular format
 func ExecuteQuery(db *sql.DB, query string) ([]map[string]any, []string, error) {
 	// Execute the query
@@ -38,7 +38,7 @@ func ExecuteQuery(db *sql.DB, query string) ([]map[string]any, []string, error) 
 	if err != nil {
 		return nil, nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	// Get column names
 	columns, err := rows.Columns()
@@ -68,16 +68,14 @@ func ExecuteQuery(db *sql.DB, query string) ([]map[string]any, []string, error) 
 		// Create a map for this row
 		row := make(map[string]any)
 		for i, col := range columns {
-			var v any
 			val := values[i]
 
 			b, ok := val.([]byte)
-			if ok {
-				v = string(b)
-			} else {
-				v = val
+			if !ok {
+				row[col] = val
+				continue
 			}
-			row[col] = v
+			row[col] = string(b)
 		}
 
 		result = append(result, row)

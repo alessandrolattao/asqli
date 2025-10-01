@@ -1,8 +1,21 @@
-package ui
+package cli
 
 import (
 	"fmt"
 	"strings"
+)
+
+// ANSI color codes
+const (
+	ColorReset  = "\033[0m"
+	ColorRed    = "\033[31m"
+	ColorGreen  = "\033[32m"
+	ColorYellow = "\033[33m"
+	ColorBlue   = "\033[34m"
+	ColorPurple = "\033[35m"
+	ColorCyan   = "\033[36m"
+	ColorGray   = "\033[37m"
+	Bold        = "\033[1m"
 )
 
 // formatAsTable formats query results as an ASCII table with colors
@@ -57,11 +70,9 @@ func formatAsTable(data []map[string]any, columns []string) string {
 
 	// Rows with alternating colors
 	for i, row := range data {
-		rowColor := ""
+		rowColor := ColorGray // Light gray for odd rows
 		if i%2 == 0 {
 			rowColor = "" // Default color for even rows
-		} else {
-			rowColor = ColorGray // Light gray for odd rows
 		}
 
 		sb.WriteString(borderColor + "|" + ColorReset)

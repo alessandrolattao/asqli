@@ -388,42 +388,83 @@ func replaceBinary(newBinaryPath string) (err error) {
 		return fmt.Errorf("failed to resolve symlinks: %w", symlinkErr)
 	}
 
-	// On Windows, we need to rename the old binary first
+	// Get directory of current executable
+	exeDir := filepath.Dir(currentExe)
+
+	// Create a temporary file in the same directory as the target
+	// This ensures the temp file is on the same filesystem for atomic rename
+	tmpFile, createErr := os.CreateTemp(exeDir, ".sqlai-update-*")
+	if createErr != nil {
+		return fmt.Errorf("failed to create temp file in target directory: %w", createErr)
+	}
+	tmpPath := tmpFile.Name()
+
+	// Ensure temp file is cleaned up on error
+	defer func() {
+		if err != nil {
+			if removeErr := os.Remove(tmpPath); removeErr != nil && !os.IsNotExist(removeErr) {
+				err = fmt.Errorf("failed to remove temp file: %w (original error: %v)", removeErr, err)
+			}
+		}
+	}()
+
+	// Open source file
+	src, openErr := os.Open(newBinaryPath)
+	if openErr != nil {
+		if closeErr := tmpFile.Close(); closeErr != nil {
+			return fmt.Errorf("failed to close temp file: %w (open error: %v)", closeErr, openErr)
+		}
+		return fmt.Errorf("failed to open new binary: %w", openErr)
+	}
+
+	// Copy to temp file
+	if _, copyErr := io.Copy(tmpFile, src); copyErr != nil {
+		if closeErr := src.Close(); closeErr != nil {
+			err = fmt.Errorf("failed to close source file: %w (copy error: %v)", closeErr, copyErr)
+		}
+		if closeErr := tmpFile.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("failed to close temp file: %w (copy error: %v)", closeErr, copyErr)
+		}
+		if err == nil {
+			err = fmt.Errorf("failed to copy binary: %w", copyErr)
+		}
+		return err
+	}
+
+	// Close both files
+	if closeErr := src.Close(); closeErr != nil {
+		if closeErr2 := tmpFile.Close(); closeErr2 != nil {
+			return fmt.Errorf("failed to close temp file: %w (source close error: %v)", closeErr2, closeErr)
+		}
+		return fmt.Errorf("failed to close source file: %w", closeErr)
+	}
+
+	if closeErr := tmpFile.Close(); closeErr != nil {
+		return fmt.Errorf("failed to close temp file: %w", closeErr)
+	}
+
+	// Make the temp file executable
+	if chmodErr := os.Chmod(tmpPath, 0755); chmodErr != nil {
+		return fmt.Errorf("failed to make temp file executable: %w", chmodErr)
+	}
+
+	// On Windows, we need to rename the old binary first because we can't replace a running executable
 	if runtime.GOOS == "windows" {
 		oldExe := currentExe + ".old"
 		if renameErr := os.Rename(currentExe, oldExe); renameErr != nil {
 			return fmt.Errorf("failed to rename old binary: %w", renameErr)
 		}
 		defer func() {
-			if rerr := os.Remove(oldExe); rerr != nil && err == nil {
-				err = fmt.Errorf("failed to remove old binary: %w", rerr)
+			if removeErr := os.Remove(oldExe); removeErr != nil && !os.IsNotExist(removeErr) && err == nil {
+				err = fmt.Errorf("failed to remove old binary: %w", removeErr)
 			}
 		}()
 	}
 
-	// Copy new binary to current location
-	src, openErr := os.Open(newBinaryPath)
-	if openErr != nil {
-		return fmt.Errorf("failed to open new binary: %w", openErr)
-	}
-	defer func() {
-		if cerr := src.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("failed to close source file: %w", cerr)
-		}
-	}()
-
-	dst, createErr := os.OpenFile(currentExe, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if createErr != nil {
-		return fmt.Errorf("failed to create destination file: %w", createErr)
-	}
-	defer func() {
-		if cerr := dst.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("failed to close destination file: %w", cerr)
-		}
-	}()
-
-	if _, copyErr := io.Copy(dst, src); copyErr != nil {
-		return fmt.Errorf("failed to copy binary: %w", copyErr)
+	// Atomic rename: replace the current executable with the new one
+	// On Unix/Linux, this works even if the file is currently running
+	if renameErr := os.Rename(tmpPath, currentExe); renameErr != nil {
+		return fmt.Errorf("failed to replace binary: %w", renameErr)
 	}
 
 	return nil

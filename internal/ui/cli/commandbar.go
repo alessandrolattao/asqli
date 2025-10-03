@@ -79,7 +79,7 @@ func (c CommandBar) View() string {
 		case stateExecuting:
 			statusLine = c.spinner.View() + " " + subtleStyle.Render("Executing query")
 		case stateConfirming:
-			statusLine = subtleStyle.Render("⚠ DANGEROUS QUERY - Proceed? (y/n)")
+			statusLine = dangerStyle.Render("⚠ DANGEROUS QUERY - Proceed? (y/n)")
 		case stateReady:
 			statusLine = subtleStyle.Render("Use # for raw SQL or ask me anything • Type 'exit' to quit")
 		default:

@@ -55,4 +55,9 @@ var (
 	// Spinner style
 	spinnerStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFB6C1"))
+
+	// Danger/warning style for dangerous operations
+	dangerStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FF0000")).
+			Bold(true)
 )

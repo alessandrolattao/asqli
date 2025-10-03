@@ -54,5 +54,4 @@ func handleUpdate() {
 	}
 
 	fmt.Printf("Successfully updated to version %s!\n", latestVersion)
-	fmt.Println("Please restart the application to use the new version.")
 }

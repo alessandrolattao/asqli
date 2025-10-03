@@ -2,6 +2,8 @@
 
 SQLAI is a command-line tool that generates SQL queries from natural language using AI. It connects to your database to understand the schema and create accurate queries based on your descriptions.
 
+https://github.com/user-attachments/assets/e0e7c017-8c22-4704-bd8e-73853b8157e0
+
 ## Features
 
 - 🗄️ **Database Support**: PostgreSQL, MySQL, and SQLite

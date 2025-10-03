@@ -16,7 +16,7 @@ func GetLogo() string {
   ░▒▓███████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░
                   ░▒▓█▓▒░`
 
-	taglineSymbol := "                  ░▒▓██▓▒░"
+	taglineSymbol := "       ░▒▓██▓▒░"
 	taglineText := " AI-POWERED SQL CLIENT"
 
 	logoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFB6C1"))

@@ -255,6 +255,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentError = nil
 			m.currentResult = nil
 			m.table = nil
+			m.statusMessage = "✗ " + msg.err.Error()
 			m.state = stateReady
 			return m, nil
 		}
@@ -306,6 +307,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.currentResult = msg.result
 		m.currentError = msg.err
 		m.err = nil // Clear any previous generation errors
+
+		// Set status message based on result
+		if msg.err != nil {
+			m.statusMessage = "✗ " + msg.err.Error()
+		} else if msg.result != nil {
+			m.statusMessage = fmt.Sprintf("✓ Query executed successfully (%d rows)", len(msg.result.Rows))
+		}
 
 		// Create table if result has rows
 		if msg.result != nil && len(msg.result.Rows) > 0 {

@@ -58,6 +58,16 @@ var (
 
 	// Danger/warning style for dangerous operations
 	dangerStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF0000")).
+			Foreground(lipgloss.Color("#E87580")).
+			Bold(true)
+
+	// Error style for error messages
+	errorStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#E06C75")).
+			Bold(true)
+
+	// Success style for success messages
+	successStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#98C379")).
 			Bold(true)
 )

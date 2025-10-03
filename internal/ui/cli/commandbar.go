@@ -44,7 +44,7 @@ func (c CommandBar) View() string {
 	// SQL line (1st line) - shows the generated SQL query when available
 	var sqlLine string
 	if c.generatedSQL != "" {
-		sqlStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#98C379"))
+		sqlStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#61AFEF"))
 		labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFB6C1")).Bold(true)
 
 		// Normalize SQL to single line (replace newlines with spaces)
@@ -66,8 +66,13 @@ func (c CommandBar) View() string {
 
 	// Show status message if available (takes priority)
 	if c.statusMessage != "" {
-		successStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
-		statusLine = successStyle.Render("✓ " + c.statusMessage)
+		if strings.HasPrefix(c.statusMessage, "✗ ") {
+			statusLine = errorStyle.Render(c.statusMessage)
+		} else if strings.HasPrefix(c.statusMessage, "✓ ") {
+			statusLine = successStyle.Render(c.statusMessage)
+		} else {
+			statusLine = subtleStyle.Render(c.statusMessage)
+		}
 	} else {
 		switch c.state {
 		case stateConnecting:

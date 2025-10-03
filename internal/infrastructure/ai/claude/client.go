@@ -1,5 +1,5 @@
-// Package openai implements the AI provider interface for OpenAI's GPT models.
-package openai
+// Package claude implements the AI provider interface for Anthropic's Claude models.
+package claude
 
 import (
 	"context"
@@ -7,19 +7,21 @@ import (
 	"strings"
 
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
-	"github.com/sashabaranov/go-openai"
+	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/option"
+	"github.com/anthropics/anthropic-sdk-go/packages/param"
 )
 
 // ============================================
-// OpenAI Provider Implementation
+// Claude Provider Implementation
 // ============================================
 
-// Client implements the ai.Provider interface for OpenAI
+// Client implements the ai.Provider interface for Anthropic Claude
 type Client struct {
-	client      *openai.Client
-	model       string
+	client      anthropic.Client
+	model       anthropic.Model
 	temperature float64
-	maxTokens   int
+	maxTokens   int64
 }
 
 // Ensure Client implements ai.Provider interface
@@ -31,19 +33,19 @@ var _ ai.Provider = (*Client)(nil)
 
 func init() {
 	// Auto-register this provider on package import
-	ai.RegisterProvider(ai.ProviderOpenAI, New)
+	ai.RegisterProvider(ai.ProviderClaude, New)
 }
 
-// New creates a new OpenAI provider (implements ai.ProviderFactory)
+// New creates a new Claude provider (implements ai.ProviderFactory)
 func New(config ai.Config) (ai.Provider, error) {
 	if config.APIKey == "" {
-		return nil, fmt.Errorf("OpenAI API key is required: %w", ai.ErrInvalidConfig)
+		return nil, fmt.Errorf("claude API key is required: %w", ai.ErrInvalidConfig)
 	}
 
 	// Default model
-	model := config.Model
-	if model == "" {
-		model = openai.GPT5Mini
+	model := anthropic.Model(config.Model)
+	if config.Model == "" {
+		model = "claude-sonnet-4-5"
 	}
 
 	// Default temperature
@@ -52,13 +54,21 @@ func New(config ai.Config) (ai.Provider, error) {
 		temperature = 0.0 // Deterministic for SQL
 	}
 
-	client := openai.NewClient(config.APIKey)
+	// Default max tokens if not specified
+	maxTokens := int64(config.MaxTokens)
+	if maxTokens == 0 {
+		maxTokens = 4096
+	}
+
+	client := anthropic.NewClient(
+		option.WithAPIKey(config.APIKey),
+	)
 
 	return &Client{
 		client:      client,
 		model:       model,
 		temperature: temperature,
-		maxTokens:   config.MaxTokens,
+		maxTokens:   maxTokens,
 	}, nil
 }
 
@@ -66,7 +76,7 @@ func New(config ai.Config) (ai.Provider, error) {
 // Interface Implementation
 // ============================================
 
-// GenerateSQL generates a SQL query from natural language using OpenAI
+// GenerateSQL generates a SQL query from natural language using Claude
 func (c *Client) GenerateSQL(ctx context.Context, req *ai.GenerateRequest) (*ai.GenerateResponse, error) {
 	if req.Prompt == "" {
 		return nil, ai.ErrEmptyPrompt
@@ -74,57 +84,69 @@ func (c *Client) GenerateSQL(ctx context.Context, req *ai.GenerateRequest) (*ai.
 
 	systemPrompt := buildSystemPrompt(req.Schema, req.DatabaseType, req.Context)
 
-	chatReq := openai.ChatCompletionRequest{
-		Model: c.model,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: systemPrompt,
-			},
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: req.Prompt,
-			},
+	message, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
+		Model:       c.model,
+		MaxTokens:   c.maxTokens,
+		Temperature: param.NewOpt(c.temperature),
+		System: []anthropic.TextBlockParam{
+			{Text: systemPrompt},
 		},
-		// Temperature and TopP are omitted - reasoning models optimize these internally
-	}
+		Messages: []anthropic.MessageParam{
+			anthropic.NewUserMessage(anthropic.NewTextBlock(req.Prompt)),
+		},
+	})
 
-	if c.maxTokens > 0 {
-		chatReq.MaxTokens = c.maxTokens
-	}
-
-	resp, err := c.client.CreateChatCompletion(ctx, chatReq)
 	if err != nil {
-		return nil, fmt.Errorf("OpenAI API error: %w", err)
+		return nil, fmt.Errorf("claude API error: %w", err)
 	}
 
-	if len(resp.Choices) == 0 {
+	if len(message.Content) == 0 {
 		return nil, ai.ErrGenerationFailed
 	}
 
-	query := cleanSQLResponse(resp.Choices[0].Message.Content)
+	// Extract text from the first content block
+	var responseText string
+	firstBlock := message.Content[0]
+
+	// Use tagged switch for better readability
+	switch firstBlock.Type {
+	case "thinking":
+		// Skip thinking blocks, get the next one
+		if len(message.Content) > 1 {
+			responseText = message.Content[1].AsText().Text
+		} else {
+			return nil, ai.ErrGenerationFailed
+		}
+	case "text":
+		responseText = firstBlock.AsText().Text
+	default:
+		return nil, ai.ErrGenerationFailed
+	}
+
+	query := cleanSQLResponse(responseText)
 
 	return &ai.GenerateResponse{
 		Query:      query,
-		Confidence: 1.0, // OpenAI doesn't provide confidence scores
+		Confidence: 1.0, // Claude doesn't provide confidence scores
 		Usage: ai.UsageMetadata{
-			Provider:       "openai",
-			Model:          resp.Model,
-			PromptTokens:   resp.Usage.PromptTokens,
-			ResponseTokens: resp.Usage.CompletionTokens,
-			TotalTokens:    resp.Usage.TotalTokens,
+			Provider:       "claude",
+			Model:          string(message.Model),
+			PromptTokens:   int(message.Usage.InputTokens),
+			ResponseTokens: int(message.Usage.OutputTokens),
+			TotalTokens:    int(message.Usage.InputTokens + message.Usage.OutputTokens),
+			CachedTokens:   int(message.Usage.CacheReadInputTokens + message.Usage.CacheCreationInputTokens),
 		},
 	}, nil
 }
 
 // Name returns the provider name
 func (c *Client) Name() string {
-	return "openai"
+	return "claude"
 }
 
 // Close releases any resources held by the provider
 func (c *Client) Close() error {
-	// OpenAI client doesn't need cleanup
+	// Claude client doesn't need cleanup
 	return nil
 }
 

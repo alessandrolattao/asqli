@@ -1,8 +1,10 @@
 package cli
 
+import "github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
+
 // QueryHistory represents a completed query with its prompt, SQL, and debug information
 type QueryHistory struct {
-	Prompt   string         // User's natural language prompt
-	SQL      string         // Generated/executed SQL query
-	Metadata map[string]any // Debug metadata (tokens, model, etc.)
+	Prompt string           // User's natural language prompt
+	SQL    string           // Generated/executed SQL query
+	Usage  ai.UsageMetadata // Usage metadata (tokens, model, provider, etc.)
 }

@@ -47,9 +47,13 @@ func (c CommandBar) View() string {
 		sqlStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#98C379"))
 		labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFB6C1")).Bold(true)
 
+		// Normalize SQL to single line (replace newlines with spaces)
+		displaySQL := strings.ReplaceAll(c.generatedSQL, "\n", " ")
+		// Remove multiple spaces
+		displaySQL = strings.Join(strings.Fields(displaySQL), " ")
+
 		// Truncate SQL if too long
 		maxSQLWidth := c.width - 6 // Reserve space for "SQL: " label
-		displaySQL := c.generatedSQL
 		if len(displaySQL) > maxSQLWidth {
 			displaySQL = displaySQL[:maxSQLWidth-3] + "..."
 		}

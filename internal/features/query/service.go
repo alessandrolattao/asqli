@@ -85,7 +85,7 @@ func (s *Service) Generate(ctx context.Context, prompt, schema string, queryHist
 	return &SQL{
 		Query:       resp.Query,
 		Explanation: resp.Explanation,
-		Metadata:    resp.Metadata,
+		Usage:       resp.Usage,
 	}, nil
 }
 

@@ -1,5 +1,5 @@
-// Package openai implements the AI provider interface for OpenAI's GPT models.
-package openai
+// Package gemini implements the AI provider interface for Google's Gemini models.
+package gemini
 
 import (
 	"context"
@@ -7,16 +7,16 @@ import (
 	"strings"
 
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
-	"github.com/sashabaranov/go-openai"
+	"google.golang.org/genai"
 )
 
 // ============================================
-// OpenAI Provider Implementation
+// Gemini Provider Implementation
 // ============================================
 
-// Client implements the ai.Provider interface for OpenAI
+// Client implements the ai.Provider interface for Google Gemini
 type Client struct {
-	client      *openai.Client
+	client      *genai.Client
 	model       string
 	temperature float64
 	maxTokens   int
@@ -31,19 +31,30 @@ var _ ai.Provider = (*Client)(nil)
 
 func init() {
 	// Auto-register this provider on package import
-	ai.RegisterProvider(ai.ProviderOpenAI, New)
+	ai.RegisterProvider(ai.ProviderGemini, New)
 }
 
-// New creates a new OpenAI provider (implements ai.ProviderFactory)
+// New creates a new Gemini provider (implements ai.ProviderFactory)
 func New(config ai.Config) (ai.Provider, error) {
 	if config.APIKey == "" {
-		return nil, fmt.Errorf("OpenAI API key is required: %w", ai.ErrInvalidConfig)
+		return nil, fmt.Errorf("gemini API key is required: %w", ai.ErrInvalidConfig)
+	}
+
+	ctx := context.Background()
+
+	// Create client with API key
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  config.APIKey,
+		Backend: genai.BackendGeminiAPI,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
 	// Default model
 	model := config.Model
 	if model == "" {
-		model = openai.GPT5Mini
+		model = "gemini-2.5-flash"
 	}
 
 	// Default temperature
@@ -51,8 +62,6 @@ func New(config ai.Config) (ai.Provider, error) {
 	if temperature == 0 {
 		temperature = 0.0 // Deterministic for SQL
 	}
-
-	client := openai.NewClient(config.APIKey)
 
 	return &Client{
 		client:      client,
@@ -66,7 +75,7 @@ func New(config ai.Config) (ai.Provider, error) {
 // Interface Implementation
 // ============================================
 
-// GenerateSQL generates a SQL query from natural language using OpenAI
+// GenerateSQL generates a SQL query from natural language using Gemini
 func (c *Client) GenerateSQL(ctx context.Context, req *ai.GenerateRequest) (*ai.GenerateResponse, error) {
 	if req.Prompt == "" {
 		return nil, ai.ErrEmptyPrompt
@@ -74,57 +83,85 @@ func (c *Client) GenerateSQL(ctx context.Context, req *ai.GenerateRequest) (*ai.
 
 	systemPrompt := buildSystemPrompt(req.Schema, req.DatabaseType, req.Context)
 
-	chatReq := openai.ChatCompletionRequest{
-		Model: c.model,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: systemPrompt,
-			},
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: req.Prompt,
-			},
-		},
-		// Temperature and TopP are omitted - reasoning models optimize these internally
+	// Build the full prompt with system instructions and user query
+	fullPrompt := fmt.Sprintf("%s\n\nUser query: %s", systemPrompt, req.Prompt)
+
+	// Create content parts
+	parts := []*genai.Part{
+		{Text: fullPrompt},
 	}
 
-	if c.maxTokens > 0 {
-		chatReq.MaxTokens = c.maxTokens
+	// Create generation config
+	var generationConfig *genai.GenerateContentConfig
+	if c.maxTokens > 0 || c.temperature != 0 {
+		generationConfig = &genai.GenerateContentConfig{}
+		if c.maxTokens > 0 {
+			generationConfig.MaxOutputTokens = int32(c.maxTokens)
+		}
+		if c.temperature != 0 {
+			generationConfig.Temperature = genai.Ptr(float32(c.temperature))
+		}
 	}
 
-	resp, err := c.client.CreateChatCompletion(ctx, chatReq)
+	// Generate content
+	result, err := c.client.Models.GenerateContent(
+		ctx,
+		c.model,
+		[]*genai.Content{{Parts: parts}},
+		generationConfig,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("OpenAI API error: %w", err)
+		return nil, fmt.Errorf("gemini API error: %w", err)
 	}
 
-	if len(resp.Choices) == 0 {
+	// Extract text from response
+	if len(result.Candidates) == 0 {
 		return nil, ai.ErrGenerationFailed
 	}
 
-	query := cleanSQLResponse(resp.Choices[0].Message.Content)
+	var queryText string
+	for _, part := range result.Candidates[0].Content.Parts {
+		if part.Text != "" {
+			queryText += part.Text
+		}
+	}
+
+	if queryText == "" {
+		return nil, ai.ErrGenerationFailed
+	}
+
+	query := cleanSQLResponse(queryText)
+
+	// Build usage metadata
+	usage := ai.UsageMetadata{
+		Provider: "gemini",
+		Model:    c.model,
+	}
+
+	if result.UsageMetadata != nil {
+		usage.PromptTokens = int(result.UsageMetadata.PromptTokenCount)
+		usage.ResponseTokens = int(result.UsageMetadata.CandidatesTokenCount)
+		usage.TotalTokens = int(result.UsageMetadata.TotalTokenCount)
+		if result.UsageMetadata.CachedContentTokenCount > 0 {
+			usage.CachedTokens = int(result.UsageMetadata.CachedContentTokenCount)
+		}
+	}
 
 	return &ai.GenerateResponse{
 		Query:      query,
-		Confidence: 1.0, // OpenAI doesn't provide confidence scores
-		Usage: ai.UsageMetadata{
-			Provider:       "openai",
-			Model:          resp.Model,
-			PromptTokens:   resp.Usage.PromptTokens,
-			ResponseTokens: resp.Usage.CompletionTokens,
-			TotalTokens:    resp.Usage.TotalTokens,
-		},
+		Confidence: 1.0, // Gemini doesn't provide confidence scores
+		Usage:      usage,
 	}, nil
 }
 
 // Name returns the provider name
 func (c *Client) Name() string {
-	return "openai"
+	return "gemini"
 }
 
 // Close releases any resources held by the provider
 func (c *Client) Close() error {
-	// OpenAI client doesn't need cleanup
+	// Gemini client doesn't need explicit cleanup
 	return nil
 }
 

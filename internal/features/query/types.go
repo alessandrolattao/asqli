@@ -1,5 +1,7 @@
 package query
 
+import "github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
+
 // SQL represents a generated SQL query with metadata
 type SQL struct {
 	// The SQL query string
@@ -8,6 +10,6 @@ type SQL struct {
 	// Optional explanation of what the query does
 	Explanation string
 
-	// Metadata contains debug information (tokens, model, provider, etc.)
-	Metadata map[string]any
+	// Usage metadata (tokens, model, provider, etc.)
+	Usage ai.UsageMetadata
 }

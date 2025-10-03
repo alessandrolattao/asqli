@@ -54,8 +54,29 @@ type GenerateResponse struct {
 	// Explanation of what the query does (optional)
 	Explanation string
 
-	// Provider-specific metadata
-	Metadata map[string]any
+	// Usage metadata
+	Usage UsageMetadata
+}
+
+// UsageMetadata contains standardized usage information from AI providers
+type UsageMetadata struct {
+	// AI provider name (e.g., "openai", "gemini")
+	Provider string
+
+	// Model name used for generation
+	Model string
+
+	// Number of tokens in the prompt
+	PromptTokens int
+
+	// Number of tokens in the response
+	ResponseTokens int
+
+	// Total tokens used (prompt + response)
+	TotalTokens int
+
+	// Number of cached tokens (if applicable)
+	CachedTokens int
 }
 
 // ============================================

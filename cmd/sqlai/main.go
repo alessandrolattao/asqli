@@ -6,6 +6,9 @@ import (
 	"os"
 
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
+	_ "github.com/alessandrolattao/sqlai/internal/infrastructure/ai/claude" // Register Claude provider
+	_ "github.com/alessandrolattao/sqlai/internal/infrastructure/ai/gemini" // Register Gemini provider
+	_ "github.com/alessandrolattao/sqlai/internal/infrastructure/ai/ollama" // Register Ollama provider
 	_ "github.com/alessandrolattao/sqlai/internal/infrastructure/ai/openai" // Register OpenAI provider
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
 	"github.com/alessandrolattao/sqlai/internal/ui/cli"
@@ -14,6 +17,10 @@ import (
 func main() {
 	// Command flags
 	versionFlag := flag.Bool("version", false, "Print the version of sqlai")
+
+	// AI Provider
+	providerStr := flag.String("provider", "openai", "AI provider (openai, claude, gemini, ollama)")
+	modelStr := flag.String("model", "", "AI model to use (defaults to provider's default model)")
 
 	// Database type
 	dbTypeStr := flag.String("dbtype", "postgres", "Database type (postgres, mysql, sqlite)")
@@ -68,7 +75,7 @@ func main() {
 	if *connStr != "" {
 		// If connection string is provided, use it directly
 		cfg.ConnectionString = *connStr
-		runQuerySession(cfg)
+		runQuerySession(cfg, *providerStr, *modelStr)
 		return
 	}
 
@@ -101,21 +108,46 @@ func main() {
 	}
 
 	// Default to query command
-	runQuerySession(cfg)
+	runQuerySession(cfg, *providerStr, *modelStr)
 }
 
-func runQuerySession(dbConfig adapters.Config) {
-	// Check AI Provider API key
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	if apiKey == "" {
-		fmt.Fprintf(os.Stderr, "Error: OPENAI_API_KEY environment variable is not set\n")
+func runQuerySession(dbConfig adapters.Config, providerStr string, modelStr string) {
+	// Determine AI provider type
+	var providerType ai.ProviderType
+	var apiKeyEnvVar string
+
+	switch providerStr {
+	case "openai":
+		providerType = ai.ProviderOpenAI
+		apiKeyEnvVar = "OPENAI_API_KEY"
+	case "claude":
+		providerType = ai.ProviderClaude
+		apiKeyEnvVar = "ANTHROPIC_API_KEY"
+	case "gemini":
+		providerType = ai.ProviderGemini
+		apiKeyEnvVar = "GEMINI_API_KEY"
+	case "ollama":
+		providerType = ai.ProviderOllama
+		apiKeyEnvVar = "" // Ollama doesn't require an API key
+	default:
+		fmt.Fprintf(os.Stderr, "Error: Unsupported AI provider '%s'. Supported providers: openai, claude, gemini, ollama\n", providerStr)
 		os.Exit(1)
 	}
 
+	// Check AI Provider API key (skip for Ollama)
+	var apiKey string
+	if apiKeyEnvVar != "" {
+		apiKey = os.Getenv(apiKeyEnvVar)
+		if apiKey == "" {
+			fmt.Fprintf(os.Stderr, "Error: %s environment variable is not set\n", apiKeyEnvVar)
+			os.Exit(1)
+		}
+	}
+
 	aiConfig := ai.Config{
-		Type:        ai.ProviderOpenAI,
+		Type:        providerType,
 		APIKey:      apiKey,
-		Model:       "", // Use default
+		Model:       modelStr, // Use specified model or default
 		Temperature: 0.0,
 	}
 

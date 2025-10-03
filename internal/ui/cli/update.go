@@ -260,7 +260,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.generatedSQL = msg.sql.Query
-		m.currentMetadata = msg.sql.Metadata
+		m.currentUsage = msg.sql.Usage
 		m.err = nil // Clear any previous generation errors
 
 		// Check if query is dangerous
@@ -289,12 +289,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		// Store complete query history (prompt + SQL + metadata) for AI context and debug
+		// Store complete query history (prompt + SQL + usage) for AI context and debug
 		if m.currentPrompt != "" && m.generatedSQL != "" {
 			m.queryHistory = append(m.queryHistory, QueryHistory{
-				Prompt:   m.currentPrompt,
-				SQL:      m.generatedSQL,
-				Metadata: m.currentMetadata,
+				Prompt: m.currentPrompt,
+				SQL:    m.generatedSQL,
+				Usage:  m.currentUsage,
 			})
 			// Keep only last N queries for context
 			if len(m.queryHistory) > MaxQueryHistory {

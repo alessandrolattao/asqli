@@ -4,10 +4,14 @@ SQLAI is a command-line tool that generates SQL queries from natural language us
 
 ## Features
 
-- Supports PostgreSQL, MySQL, and SQLite databases
-- Generates SQL queries from natural language descriptions
-- Automatically extracts schema information for context-aware queries
-- Interactive CLI interface
+- 🗄️ **Database Support**: PostgreSQL, MySQL, and SQLite
+- 🤖 **Multiple AI Providers**: OpenAI, Claude (Anthropic), Google Gemini, and Ollama (local models)
+- 💬 **Natural Language to SQL**: Generate queries from plain English descriptions
+- 🔍 **Schema-Aware**: Automatically extracts database schema for accurate queries
+- 🎨 **Interactive TUI**: Beautiful terminal interface with table navigation
+- ⚡ **Fast & Efficient**: Token usage tracking and caching support
+- 🔧 **Raw SQL Mode**: Execute direct SQL with `#` prefix
+- 📊 **Query History**: Navigate and reuse previous queries
 
 ## Installation
 
@@ -47,24 +51,81 @@ If you prefer to build from source:
 go install github.com/alessandrolattao/sqlai/cmd/sqlai@latest
 ```
 
+## Prerequisites
+
+SQLAI requires an API key from one of the supported AI providers (except Ollama which runs locally):
+
+### OpenAI (default)
+```bash
+export OPENAI_API_KEY="sk-..."
+```
+Get your API key from: https://platform.openai.com/api-keys
+
+### Claude (Anthropic)
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+Get your API key from: https://console.anthropic.com/
+
+### Google Gemini
+```bash
+export GEMINI_API_KEY="AIza..."
+```
+Get your API key from: https://aistudio.google.com/app/apikey
+
+### Ollama (Local - No API Key Required)
+Install Ollama and pull a model:
+```bash
+# Install Ollama from https://ollama.ai
+ollama pull llama3.2
+# Or any other model: llama3.3, deepseek-r1, qwen2.5, etc.
+```
+
+Ollama will automatically detect and use:
+- Running models (priority)
+- Locally available models (fallback)
+
 ## Usage
 
 ```bash
-# Connect to a PostgreSQL database
+# Connect to a PostgreSQL database (using OpenAI by default)
 sqlai --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+
+# Use Claude (Anthropic)
+sqlai --provider claude --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+
+# Use a specific Claude model
+sqlai --provider claude --model claude-opus-4-1 --dbtype postgres --connection "postgresql://..."
+
+# Use Google Gemini
+sqlai --provider gemini --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+
+# Use Ollama (local models - no API key needed)
+sqlai --provider ollama --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+
+# Use Ollama with a specific model
+sqlai --provider ollama --model llama3.3 --dbtype sqlite --file database.db
+
+# Use Ollama on a remote server
+export OLLAMA_HOST=http://192.168.1.100:11434
+sqlai --provider ollama --dbtype postgres --connection "postgresql://..."
 
 # Connect to a MySQL database
 sqlai --dbtype mysql --host localhost --port 3306 --user myuser --password mypassword --db mydb
 
 # Connect to a SQLite database
 sqlai --dbtype sqlite --file path/to/database.db
-
-# Use a direct connection string
-sqlai --dbtype postgres --connection "postgresql://user:password@localhost:5432/mydb?sslmode=disable"
 ```
 
-### Connection Parameters
+### Parameters
 
+#### AI Provider
+| Parameter    | Description                                          | Default   |
+|--------------|------------------------------------------------------|-----------|
+| `--provider` | AI provider (openai, claude, gemini, ollama)         | openai    |
+| `--model`    | AI model to use (provider-specific, optional)        |           |
+
+#### Database Connection
 | Parameter    | Description                                   | Default   |
 |--------------|-----------------------------------------------|-----------|
 | `--dbtype`   | Database type (postgres, mysql, sqlite)       | postgres  |
@@ -77,17 +138,46 @@ sqlai --dbtype postgres --connection "postgresql://user:password@localhost:5432/
 | `--sslmode`  | PostgreSQL SSL mode                           | disable   |
 | `--parsetime` | MySQL: parse time values to Go time.Time     | true      |
 | `--file`     | SQLite database file path                     | |
+
+#### Other
+| Parameter    | Description                                   | Default   |
+|--------------|-----------------------------------------------|-----------|
 | `--version`  | Print the version and exit                    | |
 
-## Example
+## Interactive Usage
 
-Once connected to your database, you can ask for queries in natural language:
+Once connected, SQLAI provides a beautiful terminal interface:
 
+### Natural Language Queries
 ```
-> Show me all users who registered in the last month
+sqlai > show me all users from Italy
+sqlai > count active subscriptions by plan
+sqlai > list top 10 customers by revenue
 ```
 
-The tool will generate and display the corresponding SQL query based on your database schema.
+### Raw SQL Mode (prefix with `#`)
+```
+sqlai > # SELECT * FROM users WHERE created_at > NOW() - INTERVAL '7 days'
+```
+
+### Keyboard Shortcuts
+- `↑`/`↓`/`←`/`→` - Navigate table results
+- `Ctrl+↑`/`Ctrl+↓` - Navigate query history
+- `Ctrl+r` - Open history list
+- `Ctrl+p` - View last query details (prompt, SQL, tokens)
+- `Ctrl+c` - Copy table as TSV
+- `Esc` - Clear input
+- `Ctrl+q` - Quit
+
+### AI Provider Models
+
+**OpenAI**: `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1-mini`, `o3-mini`
+
+**Claude**: `claude-sonnet-4-5` (default), `claude-opus-4-1`, `claude-3-7-sonnet-latest`, `claude-3-5-haiku-latest`
+
+**Gemini**: `gemini-2.0-flash-exp` (default), `gemini-1.5-pro`, `gemini-1.5-flash`
+
+**Ollama**: Auto-detects running/available models. Popular: `llama3.2`, `llama3.3`, `deepseek-r1`, `qwen2.5`, `mistral`, `codellama`
 
 ## License
 

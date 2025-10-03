@@ -35,12 +35,12 @@ type Model struct {
 	table     *Table
 
 	// Application state
-	state            state
-	schema           string
-	err              error
-	currentPrompt    string
-	generatedSQL     string
-	currentMetadata  map[string]any
+	state         state
+	schema        string
+	err           error
+	currentPrompt string
+	generatedSQL  string
+	currentUsage  ai.UsageMetadata
 
 	// Current result display
 	currentResult *execution.Result
@@ -104,4 +104,3 @@ func (m Model) Init() tea.Cmd {
 		m.spinner.Tick,
 	)
 }
-

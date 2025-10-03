@@ -12,6 +12,7 @@ SQLAI is a command-line tool that generates SQL queries from natural language us
 - ⚡ **Fast & Efficient**: Token usage tracking and caching support
 - 🔧 **Raw SQL Mode**: Execute direct SQL with `#` prefix
 - 📊 **Query History**: Navigate and reuse previous queries
+- 🔐 **Password Management**: Support for PostgreSQL `.pgpass` file
 
 ## Installation
 
@@ -143,6 +144,58 @@ sqlai --dbtype sqlite --file path/to/database.db
 | Parameter    | Description                                   | Default   |
 |--------------|-----------------------------------------------|-----------|
 | `--version`  | Print the version and exit                    | |
+
+## Password Management with `.pgpass`
+
+SQLAI supports the PostgreSQL `.pgpass` file for secure password storage. This allows you to omit the `--password` flag from the command line.
+
+### Setup
+
+Create a `.pgpass` file in your home directory:
+
+**Linux/macOS:**
+```bash
+# Create the file
+cat > ~/.pgpass << EOF
+hostname:port:database:username:password
+localhost:5432:mydb:myuser:mypassword
+localhost:5432:*:postgres:adminpass
+*:*:testdb:testuser:testpass
+EOF
+
+# Set correct permissions (required)
+chmod 0600 ~/.pgpass
+```
+
+**Windows:**
+```
+# Location: %APPDATA%\postgresql\pgpass.conf
+hostname:port:database:username:password
+```
+
+### Format
+
+```
+hostname:port:database:username:password
+```
+
+- Use `*` as wildcard in any of the first four fields
+- Escape `:` or `\` characters with `\`
+- First matching line is used
+- Comments start with `#`
+
+### Usage
+
+```bash
+# Password automatically loaded from .pgpass
+sqlai --dbtype postgres --host localhost --user myuser --db mydb
+
+# Override with PGPASSFILE environment variable
+export PGPASSFILE=/path/to/custom/pgpass
+sqlai --dbtype postgres --host localhost --user myuser --db mydb
+```
+
+**Note:** `.pgpass` works for both PostgreSQL and MySQL connections.
 
 ## Interactive Usage
 

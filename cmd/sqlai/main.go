@@ -10,6 +10,7 @@ import (
 	_ "github.com/alessandrolattao/sqlai/internal/infrastructure/ai/gemini" // Register Gemini provider
 	_ "github.com/alessandrolattao/sqlai/internal/infrastructure/ai/ollama" // Register Ollama provider
 	_ "github.com/alessandrolattao/sqlai/internal/infrastructure/ai/openai" // Register OpenAI provider
+	"github.com/alessandrolattao/sqlai/internal/infrastructure/config"
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
 	"github.com/alessandrolattao/sqlai/internal/ui/cli"
 )
@@ -88,6 +89,13 @@ func main() {
 		cfg.Password = *dbPassword
 		cfg.DBName = *dbName
 		cfg.SSLMode = *dbSSLMode
+
+		// Try to get password from .pgpass if not provided
+		if cfg.Password == "" && cfg.Host != "" && cfg.User != "" && cfg.DBName != "" {
+			if pgpassPassword := config.GetPasswordForConfig(cfg.Host, cfg.Port, cfg.DBName, cfg.User); pgpassPassword != "" {
+				cfg.Password = pgpassPassword
+			}
+		}
 	case adapters.MySQL:
 		cfg.Host = *dbHost
 		cfg.Port = *dbPort
@@ -95,6 +103,13 @@ func main() {
 		cfg.Password = *dbPassword
 		cfg.DBName = *dbName
 		cfg.ParseTime = *parseTime
+
+		// Try to get password from .pgpass if not provided (works for MySQL too)
+		if cfg.Password == "" && cfg.Host != "" && cfg.User != "" && cfg.DBName != "" {
+			if pgpassPassword := config.GetPasswordForConfig(cfg.Host, cfg.Port, cfg.DBName, cfg.User); pgpassPassword != "" {
+				cfg.Password = pgpassPassword
+			}
+		}
 	case adapters.SQLite:
 		if *dbFile == "" && *dbName != "" {
 			// Use dbName as file path for SQLite if dbFile is not specified

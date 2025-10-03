@@ -63,7 +63,13 @@ func (a *SQLiteAdapter) GetTableNames(ctx context.Context, db *sql.DB) ([]string
 
 // GetTableDefinition retrieves the definition of a specific SQLite table
 func (a *SQLiteAdapter) GetTableDefinition(ctx context.Context, db *sql.DB, tableName string) (*TableDefinition, error) {
+	// Validate table name to prevent SQL injection
+	if err := ValidateTableName(tableName); err != nil {
+		return nil, fmt.Errorf("invalid table name: %w", err)
+	}
+
 	// Get pragma info for columns
+	// Note: PRAGMA statements don't support parameter binding, so we validate the input strictly
 	pragmaQuery := fmt.Sprintf("PRAGMA table_info(%s)", tableName)
 
 	rows, err := db.QueryContext(ctx, pragmaQuery)
@@ -99,9 +105,10 @@ func (a *SQLiteAdapter) GetTableDefinition(ctx context.Context, db *sql.DB, tabl
 			// In SQLite, autoincrement is only applicable to INTEGER PRIMARY KEY columns
 			if strings.ToUpper(dataType) == "INTEGER" {
 				// Get the SQL that created the table
-				createTableQuery := fmt.Sprintf("SELECT sql FROM sqlite_master WHERE type='table' AND name='%s'", tableName)
+				// tableName is already validated, safe to use in query
+				createTableQuery := "SELECT sql FROM sqlite_master WHERE type='table' AND name=?"
 				var createTableSQL string
-				err := db.QueryRowContext(ctx, createTableQuery).Scan(&createTableSQL)
+				err := db.QueryRowContext(ctx, createTableQuery, tableName).Scan(&createTableSQL)
 				if err != nil {
 					return nil, err
 				}
@@ -116,6 +123,7 @@ func (a *SQLiteAdapter) GetTableDefinition(ctx context.Context, db *sql.DB, tabl
 	}
 
 	// Get foreign key constraints
+	// tableName is already validated, safe to use in PRAGMA
 	fkeyQuery := fmt.Sprintf("PRAGMA foreign_key_list(%s)", tableName)
 
 	fkeyRows, err := db.QueryContext(ctx, fkeyQuery)
@@ -181,6 +189,7 @@ func (a *SQLiteAdapter) GetTableDefinition(ctx context.Context, db *sql.DB, tabl
 	}
 
 	// Get index information which can indicate UNIQUE constraints
+	// tableName is already validated, safe to use in PRAGMA
 	indexQuery := fmt.Sprintf("PRAGMA index_list(%s)", tableName)
 
 	indexRows, err := db.QueryContext(ctx, indexQuery)
@@ -200,13 +209,19 @@ func (a *SQLiteAdapter) GetTableDefinition(ctx context.Context, db *sql.DB, tabl
 
 		// Only process unique constraints
 		if unique == 1 && origin == 'u' {
+			// Validate index name before using it in query
+			if err := ValidateIndexName(name); err != nil {
+				// Skip invalid index names instead of failing
+				continue
+			}
+
 			// Get the columns in this index
+			// index name is validated, safe to use in PRAGMA
 			indexInfoQuery := fmt.Sprintf("PRAGMA index_info(%s)", name)
 			indexInfoRows, err := db.QueryContext(ctx, indexInfoQuery)
 			if err != nil {
 				return nil, err
 			}
-			defer func() { _ = indexInfoRows.Close() }()
 
 			var indexCols []string
 			for indexInfoRows.Next() {
@@ -214,11 +229,15 @@ func (a *SQLiteAdapter) GetTableDefinition(ctx context.Context, db *sql.DB, tabl
 				var colName string
 
 				if err := indexInfoRows.Scan(&seqno, &cid, &colName); err != nil {
+					_ = indexInfoRows.Close()
 					return nil, err
 				}
 
 				indexCols = append(indexCols, colName)
 			}
+
+			// Close rows immediately after use (not deferred in loop)
+			_ = indexInfoRows.Close()
 
 			if len(indexCols) > 0 {
 				constraints = append(constraints, ConstraintDefinition{
@@ -244,60 +263,16 @@ func (a *SQLiteAdapter) GetDatabaseSchema(ctx context.Context, db *sql.DB) (stri
 		return "", err
 	}
 
-	var schemaBuilder strings.Builder
-	schemaBuilder.WriteString("DATABASE SCHEMA:\n\n")
-
+	// Get all table definitions
+	tableDefs := make([]*TableDefinition, 0, len(tables))
 	for _, tableName := range tables {
 		tableDef, err := a.GetTableDefinition(ctx, db, tableName)
 		if err != nil {
 			return "", err
 		}
-
-		schemaBuilder.WriteString(fmt.Sprintf("TABLE: %s\n", tableDef.Name))
-
-		// Columns
-		schemaBuilder.WriteString("Columns:\n")
-		for _, col := range tableDef.Columns {
-			nullable := "NOT NULL"
-			if col.Nullable {
-				nullable = "NULL"
-			}
-
-			defaultVal := ""
-			if col.Default != "" {
-				defaultVal = fmt.Sprintf(" DEFAULT %s", col.Default)
-			}
-
-			primaryKey := ""
-			if col.IsPrimary {
-				primaryKey = " PRIMARY KEY"
-			}
-
-			autoIncr := ""
-			if col.IsAutoIncr {
-				autoIncr = " AUTOINCREMENT"
-			}
-
-			schemaBuilder.WriteString(fmt.Sprintf("  %s %s %s%s%s%s\n",
-				col.Name, col.Type, nullable, defaultVal, primaryKey, autoIncr))
-		}
-
-		// Constraints
-		if len(tableDef.Constraints) > 0 {
-			schemaBuilder.WriteString("Constraints:\n")
-			for _, constraint := range tableDef.Constraints {
-				schemaBuilder.WriteString(fmt.Sprintf("  %s: %s\n",
-					constraint.Type, constraint.Definition))
-
-				if constraint.Type == "FOREIGN KEY" && constraint.ReferencedTable != "" {
-					schemaBuilder.WriteString(fmt.Sprintf("    REFERENCES: %s\n",
-						constraint.ReferencedTable))
-				}
-			}
-		}
-
-		schemaBuilder.WriteString("\n")
+		tableDefs = append(tableDefs, tableDef)
 	}
 
-	return schemaBuilder.String(), nil
+	// Use shared formatter
+	return FormatDatabaseSchema(tableDefs), nil
 }

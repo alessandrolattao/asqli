@@ -1,0 +1,98 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: sqlai-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker-entrypoint-initdb.d/mysql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-prootpassword",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sqlai-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: sqlai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d/postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d testdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sqlai-network
+
+  sqlai:
+    image: golang:1.25-alpine
+    container_name: sqlai-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./:/app
+      - ${HOME}/go:/root/go
+      - ${HOME}/.cache/go-build:/root/.cache/go-build
+    working_dir: /app
+    command:
+      [
+        "go",
+        "run",
+        "./...",
+        "--dbtype",
+        "mysql",
+        "--host",
+        "mysql",
+        "--port",
+        "3306",
+        "--user",
+        "testuser",
+        "--password",
+        "testpass",
+        "--db",
+        "testdb",
+      ]
+    networks:
+      - sqlai-network
+    profiles:
+      - manual
+
+volumes:
+  mysql_data:
+  postgres_data:
+
+networks:
+  sqlai-network:

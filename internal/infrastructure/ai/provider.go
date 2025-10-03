@@ -3,7 +3,6 @@ package ai
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -130,14 +129,3 @@ func ListProviders() []ProviderType {
 	// Use maps.Keys + slices.Collect (Go 1.23+) for idiomatic iteration
 	return slices.Collect(maps.Keys(providerRegistry))
 }
-
-// ============================================
-// Errors
-// ============================================
-
-var (
-	ErrUnsupportedProvider = errors.New("unsupported AI provider")
-	ErrInvalidConfig       = errors.New("invalid provider configuration")
-	ErrGenerationFailed    = errors.New("SQL generation failed")
-	ErrEmptyPrompt         = errors.New("prompt cannot be empty")
-)

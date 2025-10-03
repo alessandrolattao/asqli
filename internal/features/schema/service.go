@@ -3,7 +3,6 @@ package schema
 
 import (
 	"context"
-	"sync"
 
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/database"
 )
@@ -50,36 +49,4 @@ func (s *Service) Invalidate() {
 func (s *Service) Refresh(ctx context.Context) (string, error) {
 	s.Invalidate()
 	return s.Get(ctx)
-}
-
-// Cache provides thread-safe schema caching
-type Cache struct {
-	mu     sync.RWMutex
-	schema string
-}
-
-// NewCache creates a new schema cache
-func NewCache() *Cache {
-	return &Cache{}
-}
-
-// Get retrieves the cached schema
-func (c *Cache) Get() string {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.schema
-}
-
-// Set stores the schema in cache
-func (c *Cache) Set(schema string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.schema = schema
-}
-
-// Clear removes the cached schema
-func (c *Cache) Clear() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.schema = ""
 }

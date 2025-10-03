@@ -2,8 +2,8 @@
 package database
 
 import (
+	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
 )
@@ -24,21 +24,15 @@ const (
 	SQLite     = adapters.SQLite
 )
 
-// Errors
-var (
-	ErrUnsupportedDriver = errors.New("unsupported database driver")
-	ErrInvalidConfig     = errors.New("invalid database configuration")
-	ErrConnectionFailed  = errors.New("database connection failed")
-)
-
-// ExecuteQuery runs a SQL query and returns the result in a tabular format
-func ExecuteQuery(db *sql.DB, query string) ([]map[string]any, []string, error) {
-	// Execute the query
-	rows, err := db.Query(query)
+// ExecuteQuery runs a SQL query with the given context and returns the result in a tabular format.
+// Returns a slice of row maps, column names, and any error encountered.
+func ExecuteQuery(ctx context.Context, db *sql.DB, query string) ([]map[string]any, []string, error) {
+	// Execute the query with context
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer func() { _ = rows.Close() }()
+	defer closeRows(rows)
 
 	// Get column names
 	columns, err := rows.Columns()
@@ -55,7 +49,7 @@ func ExecuteQuery(db *sql.DB, query string) ([]map[string]any, []string, error) 
 
 	// Iterate through the result set
 	for rows.Next() {
-		// Initialize the pointers
+		// Initialize the pointers (Go 1.22+ range style)
 		for i := range columns {
 			valuePtrs[i] = &values[i]
 		}

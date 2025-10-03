@@ -5,19 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alessandrolattao/sqlai/internal/features/execution"
-	"github.com/alessandrolattao/sqlai/internal/features/query"
-	"github.com/alessandrolattao/sqlai/internal/features/schema"
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
 	_ "github.com/alessandrolattao/sqlai/internal/infrastructure/ai/openai" // Register OpenAI provider
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database"
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
 	"github.com/alessandrolattao/sqlai/internal/ui/cli"
-)
-
-const (
-	// Version is the current version of sqlai
-	Version = "0.1.0"
 )
 
 func main() {
@@ -114,51 +105,25 @@ func main() {
 }
 
 func runQuerySession(dbConfig adapters.Config) {
-	// 1. Initialize infrastructure
-
-	// Database connection
-	dbConn, err := database.Open(dbConfig)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error connecting to database: %v\n", err)
-		os.Exit(1)
-	}
-	defer func() {
-		if err := dbConn.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to close database connection: %v\n", err)
-		}
-	}()
-
-	// AI Provider
+	// Check AI Provider API key
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
 		fmt.Fprintf(os.Stderr, "Error: OPENAI_API_KEY environment variable is not set\n")
 		os.Exit(1)
 	}
 
-	aiProvider, err := ai.NewProvider(ai.Config{
+	aiConfig := ai.Config{
 		Type:        ai.ProviderOpenAI,
 		APIKey:      apiKey,
 		Model:       "", // Use default
 		Temperature: 0.0,
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error initializing AI provider: %v\n", err)
+	}
+
+	// Start CLI - it will handle connection and initialization
+	cliApp := cli.NewApp(dbConfig, aiConfig)
+
+	if err := cliApp.Start(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running application: %v\n", err)
 		os.Exit(1)
 	}
-	defer func() {
-		if err := aiProvider.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to close AI provider: %v\n", err)
-		}
-	}()
-
-	// 2. Initialize features
-	schemaService := schema.NewService(dbConn)
-	queryService := query.NewService(aiProvider)
-	executionService := execution.NewService(dbConn)
-
-	// 3. Initialize UI
-	cliApp := cli.NewApp(queryService, executionService, schemaService)
-
-	// 4. Start CLI
-	cliApp.Start()
 }

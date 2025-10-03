@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	_ "github.com/lib/pq" // Import the PostgreSQL driver
 )
@@ -184,60 +183,16 @@ func (a *PostgresAdapter) GetDatabaseSchema(ctx context.Context, db *sql.DB) (st
 		return "", err
 	}
 
-	var schemaBuilder strings.Builder
-	schemaBuilder.WriteString("DATABASE SCHEMA:\n\n")
-
+	// Get all table definitions
+	tableDefs := make([]*TableDefinition, 0, len(tables))
 	for _, tableName := range tables {
 		tableDef, err := a.GetTableDefinition(ctx, db, tableName)
 		if err != nil {
 			return "", err
 		}
-
-		schemaBuilder.WriteString(fmt.Sprintf("TABLE: %s\n", tableDef.Name))
-
-		// Columns
-		schemaBuilder.WriteString("Columns:\n")
-		for _, col := range tableDef.Columns {
-			nullable := "NOT NULL"
-			if col.Nullable {
-				nullable = "NULL"
-			}
-
-			defaultVal := ""
-			if col.Default != "" {
-				defaultVal = fmt.Sprintf(" DEFAULT %s", col.Default)
-			}
-
-			primaryKey := ""
-			if col.IsPrimary {
-				primaryKey = " PRIMARY KEY"
-			}
-
-			autoIncr := ""
-			if col.IsAutoIncr {
-				autoIncr = " AUTO INCREMENT"
-			}
-
-			schemaBuilder.WriteString(fmt.Sprintf("  %s %s %s%s%s%s\n",
-				col.Name, col.Type, nullable, defaultVal, primaryKey, autoIncr))
-		}
-
-		// Constraints
-		if len(tableDef.Constraints) > 0 {
-			schemaBuilder.WriteString("Constraints:\n")
-			for _, constraint := range tableDef.Constraints {
-				schemaBuilder.WriteString(fmt.Sprintf("  %s: %s\n",
-					constraint.Type, constraint.Definition))
-
-				if constraint.Type == "FOREIGN KEY" && constraint.ReferencedTable != "" {
-					schemaBuilder.WriteString(fmt.Sprintf("    REFERENCES: %s\n",
-						constraint.ReferencedTable))
-				}
-			}
-		}
-
-		schemaBuilder.WriteString("\n")
+		tableDefs = append(tableDefs, tableDef)
 	}
 
-	return schemaBuilder.String(), nil
+	// Use shared formatter
+	return FormatDatabaseSchema(tableDefs), nil
 }

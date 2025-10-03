@@ -20,10 +20,11 @@ func NewService(conn *database.Connection) *Service {
 	}
 }
 
-// Execute executes a SQL query and returns the results
+// Execute executes a SQL query with the given context and returns the results as a structured Result.
+// The context is used for cancellation and timeout control.
 func (s *Service) Execute(ctx context.Context, query string) (*Result, error) {
-	// Execute the query
-	data, columns, err := s.conn.ExecuteQuery(query)
+	// Execute the query with context
+	data, columns, err := s.conn.ExecuteQuery(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}

@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
 )
@@ -37,19 +38,25 @@ func Open(config adapters.Config) (*Connection, error) {
 	// Create adapter based on driver type
 	adapter, err := NewAdapter(config.DriverType)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create adapter: %w", err)
 	}
 
 	// Connect to the database
 	db, err := adapter.Connect(config)
 	if err != nil {
-		return nil, ErrConnectionFailed
+		return nil, fmt.Errorf("%w: %v", ErrConnectionFailed, err)
+	}
+
+	// Ensure db is not nil before testing connection
+	if db == nil {
+		return nil, fmt.Errorf("%w: database connection is nil", ErrConnectionFailed)
 	}
 
 	// Test the connection
 	if err := db.Ping(); err != nil {
+		// Safe to close: db is guaranteed to be non-nil at this point
 		_ = db.Close()
-		return nil, ErrConnectionFailed
+		return nil, fmt.Errorf("%w: ping failed: %v", ErrConnectionFailed, err)
 	}
 
 	return &Connection{
@@ -67,22 +74,23 @@ func (c *Connection) Close() error {
 	return nil
 }
 
-// ExecuteQuery runs a SQL query and returns the result
-func (c *Connection) ExecuteQuery(query string) ([]map[string]any, []string, error) {
-	return ExecuteQuery(c.DB, query)
+// ExecuteQuery runs a SQL query with the given context and returns the result.
+// The context is used for cancellation and timeout control.
+func (c *Connection) ExecuteQuery(ctx context.Context, query string) ([]map[string]any, []string, error) {
+	return ExecuteQuery(ctx, c.DB, query)
 }
 
-// GetTableNames retrieves all table names from the database
+// GetTableNames retrieves all table names from the database using the given context.
 func (c *Connection) GetTableNames(ctx context.Context) ([]string, error) {
 	return c.adapter.GetTableNames(ctx, c.DB)
 }
 
-// GetTableDefinition retrieves the definition of a specific table
+// GetTableDefinition retrieves the definition of a specific table using the given context.
 func (c *Connection) GetTableDefinition(ctx context.Context, tableName string) (*adapters.TableDefinition, error) {
 	return c.adapter.GetTableDefinition(ctx, c.DB, tableName)
 }
 
-// GetDatabaseSchema retrieves schema information for all tables
+// GetDatabaseSchema retrieves schema information for all tables using the given context.
 func (c *Connection) GetDatabaseSchema(ctx context.Context) (string, error) {
 	return c.adapter.GetDatabaseSchema(ctx, c.DB)
 }

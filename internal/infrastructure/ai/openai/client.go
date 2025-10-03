@@ -43,7 +43,7 @@ func New(config ai.Config) (ai.Provider, error) {
 	// Default model
 	model := config.Model
 	if model == "" {
-		model = openai.GPT4Turbo
+		model = openai.GPT5Mini
 	}
 
 	// Default temperature
@@ -72,7 +72,7 @@ func (c *Client) GenerateSQL(ctx context.Context, req *ai.GenerateRequest) (*ai.
 		return nil, ai.ErrEmptyPrompt
 	}
 
-	systemPrompt := buildSystemPrompt(req.Schema, req.DatabaseType)
+	systemPrompt := buildSystemPrompt(req.Schema, req.DatabaseType, req.Context)
 
 	chatReq := openai.ChatCompletionRequest{
 		Model: c.model,
@@ -86,8 +86,7 @@ func (c *Client) GenerateSQL(ctx context.Context, req *ai.GenerateRequest) (*ai.
 				Content: req.Prompt,
 			},
 		},
-		Temperature: float32(c.temperature),
-		TopP:        0.1,
+		// Temperature and TopP are omitted - reasoning models optimize these internally
 	}
 
 	if c.maxTokens > 0 {
@@ -132,7 +131,7 @@ func (c *Client) Close() error {
 // ============================================
 
 // buildSystemPrompt constructs the system prompt with schema information
-func buildSystemPrompt(schema, dbType string) string {
+func buildSystemPrompt(schema, dbType, context string) string {
 	prompt := `You are a helpful assistant that generates SQL queries based on natural language descriptions.
 
 You'll receive database schema information that includes tables, their columns, data types, constraints,
@@ -147,6 +146,10 @@ in the SQL or any additional text.`
 
 	if schema != "" {
 		prompt += fmt.Sprintf("\n\n%s", schema)
+	}
+
+	if context != "" {
+		prompt += fmt.Sprintf("\n\n%s", context)
 	}
 
 	return prompt

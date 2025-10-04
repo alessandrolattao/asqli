@@ -20,47 +20,27 @@ https://github.com/user-attachments/assets/509565da-199a-4db0-839b-5b5bef19e0c7
 
 ## Installation
 
-Download the pre-built binary for your platform from the [latest release](https://github.com/alessandrolattao/asqli/releases/latest).
-
-### Linux (x86_64)
+Run the installation script that automatically detects your OS and architecture:
 
 ```bash
-tar -xzf asqli-linux-amd64-X.Y.Z.tar.gz
-./asqli-linux-amd64
+curl -sSL https://raw.githubusercontent.com/alessandrolattao/asqli/main/install.sh | bash
 ```
 
-### Linux (ARM64)
+Or download and run it manually:
 
 ```bash
-tar -xzf asqli-linux-arm64-X.Y.Z.tar.gz
-./asqli-linux-arm64
+curl -sSL https://raw.githubusercontent.com/alessandrolattao/asqli/main/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
 ```
 
-### macOS (Intel)
+To install to a custom directory (e.g., `~/.local/bin`):
 
 ```bash
-tar -xzf asqli-darwin-amd64-X.Y.Z.tar.gz
-./asqli-darwin-amd64
+INSTALL_DIR=~/.local/bin ./install.sh
 ```
 
-### macOS (Apple Silicon)
-
-```bash
-tar -xzf asqli-darwin-arm64-X.Y.Z.tar.gz
-./asqli-darwin-arm64
-```
-
-### Windows
-
-Extract the zip file and run `asqli-windows-amd64.exe`.
-
-### From Source
-
-If you prefer to build from source:
-
-```bash
-go install github.com/alessandrolattao/asqli/cmd/asqli@latest
-```
+Alternatively, download pre-built binaries from the [latest release](https://github.com/alessandrolattao/asqli/releases/latest).
 
 ## Prerequisites
 

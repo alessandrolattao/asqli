@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/alessandrolattao/asqli/internal/infrastructure/config"
 	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
@@ -81,4 +82,26 @@ func buildDatabaseConfig(flags *Flags) adapters.Config {
 	}
 
 	return cfg
+}
+
+// buildTimeoutConfig creates a timeout configuration from flags
+func buildTimeoutConfig(flags *Flags) config.TimeoutConfig {
+	// Start with defaults
+	timeouts := config.DefaultTimeouts()
+
+	// Override with user-specified values (if provided)
+	if flags.TimeoutConnection > 0 {
+		timeouts.DatabaseConnection = time.Duration(flags.TimeoutConnection) * time.Second
+	}
+	if flags.TimeoutQuery > 0 {
+		timeouts.DatabaseQuery = time.Duration(flags.TimeoutQuery) * time.Second
+	}
+	if flags.TimeoutSchema > 0 {
+		timeouts.SchemaFetch = time.Duration(flags.TimeoutSchema) * time.Second
+	}
+	if flags.TimeoutAI > 0 {
+		timeouts.AIGeneration = time.Duration(flags.TimeoutAI) * time.Second
+	}
+
+	return timeouts
 }

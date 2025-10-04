@@ -33,6 +33,12 @@ type Flags struct {
 
 	// SQLite specific
 	File string
+
+	// Timeout settings (in seconds)
+	TimeoutConnection int
+	TimeoutQuery      int
+	TimeoutSchema     int
+	TimeoutAI         int
 }
 
 // ParseFlags parses command-line flags and returns a Flags struct
@@ -68,6 +74,12 @@ func ParseFlags() *Flags {
 
 	// SQLite specific
 	flag.StringVar(&f.File, "file", "", "SQLite database file path")
+
+	// Timeout settings (in seconds, 0 = use default)
+	flag.IntVar(&f.TimeoutConnection, "timeout-connection", 0, "Database connection timeout in seconds (default: 10)")
+	flag.IntVar(&f.TimeoutQuery, "timeout-query", 0, "Database query execution timeout in seconds (default: 30)")
+	flag.IntVar(&f.TimeoutSchema, "timeout-schema", 0, "Schema fetch timeout in seconds (default: 30)")
+	flag.IntVar(&f.TimeoutAI, "timeout-ai", 0, "AI generation timeout in seconds (default: 60)")
 
 	flag.Parse()
 

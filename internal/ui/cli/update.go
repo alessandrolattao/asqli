@@ -225,7 +225,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = stateLoadingSchema
 		// Now fetch schema
 		return m, tea.Batch(
-			fetchSchemaCmd(m.schemaService),
+			fetchSchemaCmd(m.schemaService, m.timeoutConfig),
 			m.spinner.Tick,
 		)
 
@@ -273,7 +273,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Execute directly if not dangerous
 		m.state = stateExecuting
 		return m, tea.Batch(
-			executeQueryCmd(m.executionService, m.generatedSQL),
+			executeQueryCmd(m.executionService, m.timeoutConfig, m.generatedSQL),
 			m.spinner.Tick,
 		)
 
@@ -427,7 +427,7 @@ func (m Model) handleSubmit() (Model, tea.Cmd) {
 		// Execute directly
 		m.state = stateExecuting
 		return m, tea.Batch(
-			executeQueryCmd(m.executionService, m.generatedSQL),
+			executeQueryCmd(m.executionService, m.timeoutConfig, m.generatedSQL),
 			m.spinner.Tick,
 		)
 	}
@@ -445,7 +445,7 @@ func (m Model) handleSubmit() (Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(
-		generateSQLCmd(m.queryService, query, m.schema, m.queryHistory, selectedColumn, selectedValue),
+		generateSQLCmd(m.queryService, m.timeoutConfig, query, m.schema, m.queryHistory, selectedColumn, selectedValue),
 		m.spinner.Tick,
 	)
 }
@@ -454,7 +454,7 @@ func (m Model) handleSubmit() (Model, tea.Cmd) {
 func (m Model) handleConfirmYes() (Model, tea.Cmd) {
 	m.state = stateExecuting
 	return m, tea.Batch(
-		executeQueryCmd(m.executionService, m.generatedSQL),
+		executeQueryCmd(m.executionService, m.timeoutConfig, m.generatedSQL),
 		m.spinner.Tick,
 	)
 }

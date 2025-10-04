@@ -5,12 +5,13 @@ import (
 	"os"
 
 	"github.com/alessandrolattao/asqli/internal/infrastructure/ai"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/config"
 	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 	"github.com/alessandrolattao/asqli/internal/ui/cli"
 )
 
 // runQuerySession starts a query session with the specified database and AI provider
-func runQuerySession(dbConfig adapters.Config, providerStr string, modelStr string) {
+func runQuerySession(dbConfig adapters.Config, timeoutConfig config.TimeoutConfig, providerStr string, modelStr string) {
 	// Determine AI provider type
 	var providerType ai.ProviderType
 	var apiKeyEnvVar string
@@ -51,7 +52,7 @@ func runQuerySession(dbConfig adapters.Config, providerStr string, modelStr stri
 	}
 
 	// Start CLI - it will handle connection and initialization
-	cliApp := cli.NewApp(dbConfig, aiConfig)
+	cliApp := cli.NewApp(dbConfig, aiConfig, timeoutConfig)
 
 	if err := cliApp.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error running application: %v\n", err)

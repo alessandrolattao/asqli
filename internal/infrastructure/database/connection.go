@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/alessandrolattao/asqli/internal/infrastructure/config"
 	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 )
 
@@ -34,15 +35,15 @@ type Connection struct {
 }
 
 // Open establishes a connection to the database using the specified configuration
-func Open(config adapters.Config) (*Connection, error) {
+func Open(dbConfig adapters.Config, timeoutConfig config.TimeoutConfig) (*Connection, error) {
 	// Create adapter based on driver type
-	adapter, err := NewAdapter(config.DriverType)
+	adapter, err := NewAdapter(dbConfig.DriverType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create adapter: %w", err)
 	}
 
 	// Connect to the database
-	db, err := adapter.Connect(config)
+	db, err := adapter.Connect(dbConfig)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrConnectionFailed, err)
 	}
@@ -52,8 +53,11 @@ func Open(config adapters.Config) (*Connection, error) {
 		return nil, fmt.Errorf("%w: database connection is nil", ErrConnectionFailed)
 	}
 
-	// Test the connection
-	if err := db.Ping(); err != nil {
+	// Test the connection with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutConfig.DatabaseConnection)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
 		// Safe to close: db is guaranteed to be non-nil at this point
 		_ = db.Close()
 		return nil, fmt.Errorf("%w: ping failed: %v", ErrConnectionFailed, err)
@@ -61,7 +65,7 @@ func Open(config adapters.Config) (*Connection, error) {
 
 	return &Connection{
 		DB:         db,
-		DriverType: config.DriverType,
+		DriverType: dbConfig.DriverType,
 		adapter:    adapter,
 	}, nil
 }

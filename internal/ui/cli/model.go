@@ -5,6 +5,7 @@ import (
 	"github.com/alessandrolattao/asqli/internal/features/query"
 	"github.com/alessandrolattao/asqli/internal/features/schema"
 	"github.com/alessandrolattao/asqli/internal/infrastructure/ai"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/config"
 	"github.com/alessandrolattao/asqli/internal/infrastructure/database"
 	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 	"github.com/charmbracelet/bubbles/list"
@@ -16,8 +17,9 @@ import (
 // Model represents the Bubble Tea model for the CLI application
 type Model struct {
 	// Configuration
-	dbConfig adapters.Config
-	aiConfig ai.Config
+	dbConfig      adapters.Config
+	aiConfig      ai.Config
+	timeoutConfig config.TimeoutConfig
 
 	// Services (initialized after connection)
 	queryService     *query.Service
@@ -65,6 +67,7 @@ type Model struct {
 func NewModel(
 	dbConfig adapters.Config,
 	aiConfig ai.Config,
+	timeoutConfig config.TimeoutConfig,
 ) Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
@@ -86,21 +89,22 @@ func NewModel(
 	historyList.Styles.Title = logoStyle
 
 	return Model{
-		dbConfig:     dbConfig,
-		aiConfig:     aiConfig,
-		state:        stateConnecting,
-		spinner:      s,
-		textInput:    ti,
-		list:         historyList,
-		history:      loadHistory(),
-		historyIndex: -1,
+		dbConfig:      dbConfig,
+		aiConfig:      aiConfig,
+		timeoutConfig: timeoutConfig,
+		state:         stateConnecting,
+		spinner:       s,
+		textInput:     ti,
+		list:          historyList,
+		history:       loadHistory(),
+		historyIndex:  -1,
 	}
 }
 
 // Init initializes the Bubble Tea model
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		connectDatabaseCmd(m.dbConfig, m.aiConfig),
+		connectDatabaseCmd(m.dbConfig, m.aiConfig, m.timeoutConfig),
 		m.spinner.Tick,
 	)
 }

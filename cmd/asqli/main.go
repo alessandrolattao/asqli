@@ -23,9 +23,10 @@ func main() {
 		return
 	}
 
-	// Build database configuration
+	// Build configurations
 	dbConfig := buildDatabaseConfig(flags)
+	timeoutConfig := buildTimeoutConfig(flags)
 
 	// Start query session
-	runQuerySession(dbConfig, flags.Provider, flags.Model)
+	runQuerySession(dbConfig, timeoutConfig, flags.Provider, flags.Model)
 }

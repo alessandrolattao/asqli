@@ -41,6 +41,15 @@ func (a *App) Start() error {
 	)
 
 	// Run the program
-	_, err := p.Run()
-	return err
+	finalModel, err := p.Run()
+	if err != nil {
+		return err
+	}
+
+	// Check if the model has an error (e.g., connection failed)
+	if m, ok := finalModel.(Model); ok && m.err != nil {
+		return m.err
+	}
+
+	return nil
 }

@@ -1,6 +1,8 @@
-# SQLAI
+# ASQLI
 
-SQLAI is a command-line tool that generates SQL queries from natural language using AI. It connects to your database to understand the schema and create accurate queries based on your descriptions.
+**A**I-**S**upervised **Q**uery **L**anguage **I**nterface
+
+ASQLI is a command-line tool that generates SQL queries from natural language using AI. It connects to your database to understand the schema and create accurate queries based on your descriptions.
 
 <https://github.com/user-attachments/assets/d5ac054f-57b7-421d-b29f-0178f327ca95>
 
@@ -18,51 +20,51 @@ SQLAI is a command-line tool that generates SQL queries from natural language us
 
 ## Installation
 
-Download the pre-built binary for your platform from the [latest release](https://github.com/alessandrolattao/sqlai/releases/latest).
+Download the pre-built binary for your platform from the [latest release](https://github.com/alessandrolattao/asqli/releases/latest).
 
 ### Linux (x86_64)
 
 ```bash
-tar -xzf sqlai-linux-amd64-X.Y.Z.tar.gz
-./sqlai-linux-amd64
+tar -xzf asqli-linux-amd64-X.Y.Z.tar.gz
+./asqli-linux-amd64
 ```
 
 ### Linux (ARM64)
 
 ```bash
-tar -xzf sqlai-linux-arm64-X.Y.Z.tar.gz
-./sqlai-linux-arm64
+tar -xzf asqli-linux-arm64-X.Y.Z.tar.gz
+./asqli-linux-arm64
 ```
 
 ### macOS (Intel)
 
 ```bash
-tar -xzf sqlai-darwin-amd64-X.Y.Z.tar.gz
-./sqlai-darwin-amd64
+tar -xzf asqli-darwin-amd64-X.Y.Z.tar.gz
+./asqli-darwin-amd64
 ```
 
 ### macOS (Apple Silicon)
 
 ```bash
-tar -xzf sqlai-darwin-arm64-X.Y.Z.tar.gz
-./sqlai-darwin-arm64
+tar -xzf asqli-darwin-arm64-X.Y.Z.tar.gz
+./asqli-darwin-arm64
 ```
 
 ### Windows
 
-Extract the zip file and run `sqlai-windows-amd64.exe`.
+Extract the zip file and run `asqli-windows-amd64.exe`.
 
 ### From Source
 
 If you prefer to build from source:
 
 ```bash
-go install github.com/alessandrolattao/sqlai/cmd/sqlai@latest
+go install github.com/alessandrolattao/asqli/cmd/asqli@latest
 ```
 
 ## Prerequisites
 
-SQLAI requires an API key from one of the supported AI providers (except Ollama which runs locally):
+ASQLI requires an API key from one of the supported AI providers (except Ollama which runs locally):
 
 ### OpenAI (default)
 
@@ -107,32 +109,32 @@ Ollama will automatically detect and use:
 
 ```bash
 # Connect to a PostgreSQL database (using OpenAI by default)
-sqlai --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+asqli --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
 
 # Use Claude (Anthropic)
-sqlai --provider claude --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+asqli --provider claude --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
 
 # Use a specific Claude model
-sqlai --provider claude --model claude-opus-4-1 --dbtype postgres --connection "postgresql://..."
+asqli --provider claude --model claude-opus-4-1 --dbtype postgres --connection "postgresql://..."
 
 # Use Google Gemini
-sqlai --provider gemini --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+asqli --provider gemini --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
 
 # Use Ollama (local models - no API key needed)
-sqlai --provider ollama --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
+asqli --provider ollama --dbtype postgres --host localhost --port 5432 --user myuser --password mypassword --db mydb
 
 # Use Ollama with a specific model
-sqlai --provider ollama --model llama3.3 --dbtype sqlite --file database.db
+asqli --provider ollama --model llama3.3 --dbtype sqlite --file database.db
 
 # Use Ollama on a remote server
 export OLLAMA_HOST=http://192.168.1.100:11434
-sqlai --provider ollama --dbtype postgres --connection "postgresql://..."
+asqli --provider ollama --dbtype postgres --connection "postgresql://..."
 
 # Connect to a MySQL database
-sqlai --dbtype mysql --host localhost --port 3306 --user myuser --password mypassword --db mydb
+asqli --dbtype mysql --host localhost --port 3306 --user myuser --password mypassword --db mydb
 
 # Connect to a SQLite database
-sqlai --dbtype sqlite --file path/to/database.db
+asqli --dbtype sqlite --file path/to/database.db
 ```
 
 ### Parameters
@@ -167,7 +169,7 @@ sqlai --dbtype sqlite --file path/to/database.db
 
 ## Password Management with `.pgpass`
 
-SQLAI supports the PostgreSQL `.pgpass` file for secure password storage. This allows you to omit the `--password` flag from the command line.
+ASQLI supports the PostgreSQL `.pgpass` file for secure password storage. This allows you to omit the `--password` flag from the command line.
 
 ### Setup
 
@@ -210,31 +212,31 @@ hostname:port:database:username:password
 
 ```bash
 # Password automatically loaded from .pgpass
-sqlai --dbtype postgres --host localhost --user myuser --db mydb
+asqli --dbtype postgres --host localhost --user myuser --db mydb
 
 # Override with PGPASSFILE environment variable
 export PGPASSFILE=/path/to/custom/pgpass
-sqlai --dbtype postgres --host localhost --user myuser --db mydb
+asqli --dbtype postgres --host localhost --user myuser --db mydb
 ```
 
 **Note:** `.pgpass` works for both PostgreSQL and MySQL connections.
 
 ## Interactive Usage
 
-Once connected, SQLAI provides a beautiful terminal interface:
+Once connected, ASQLI provides a beautiful terminal interface:
 
 ### Natural Language Queries
 
 ```
-sqlai > show me all users from Italy
-sqlai > count active subscriptions by plan
-sqlai > list top 10 customers by revenue
+asqli > show me all users from Italy
+asqli > count active subscriptions by plan
+asqli > list top 10 customers by revenue
 ```
 
 ### Raw SQL Mode (prefix with `#`)
 
 ```
-sqlai > # SELECT * FROM users WHERE created_at > NOW() - INTERVAL '7 days'
+asqli > # SELECT * FROM users WHERE created_at > NOW() - INTERVAL '7 days'
 ```
 
 ### Keyboard Shortcuts

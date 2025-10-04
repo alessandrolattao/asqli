@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alessandrolattao/sqlai/internal/features/execution"
+	"github.com/alessandrolattao/asqli/internal/features/execution"
 	"github.com/atotto/clipboard"
 )
 

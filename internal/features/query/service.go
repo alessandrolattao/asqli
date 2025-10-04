@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/ai"
 )
 
 // History represents a previous query execution with prompt and SQL

@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database"
 )
 
 // Service handles SQL query execution

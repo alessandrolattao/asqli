@@ -1,4 +1,4 @@
--- Insert sample data for SQLAI testing (PostgreSQL)
+-- Insert sample data for ASQLI testing (PostgreSQL)
 
 -- Insert users
 INSERT INTO users (username, email, first_name, last_name, age, country, is_active) VALUES

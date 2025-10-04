@@ -36,72 +36,72 @@ jobs:
           mkdir -p build
           
           # Build for Linux
-          GOOS=linux GOARCH=amd64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/sqlai-linux-amd64 ./cmd/sqlai
-          GOOS=linux GOARCH=arm64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/sqlai-linux-arm64 ./cmd/sqlai
+          GOOS=linux GOARCH=amd64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/asqli-linux-amd64 ./cmd/asqli
+          GOOS=linux GOARCH=arm64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/asqli-linux-arm64 ./cmd/asqli
           
           # Build for macOS
-          GOOS=darwin GOARCH=amd64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/sqlai-darwin-amd64 ./cmd/sqlai
-          GOOS=darwin GOARCH=arm64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/sqlai-darwin-arm64 ./cmd/sqlai
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/asqli-darwin-amd64 ./cmd/asqli
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/asqli-darwin-arm64 ./cmd/asqli
           
           # Build for Windows
-          GOOS=windows GOARCH=amd64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/sqlai-windows-amd64.exe ./cmd/sqlai
+          GOOS=windows GOARCH=amd64 go build -ldflags="-X main.Version=${{ env.VERSION }}" -o build/asqli-windows-amd64.exe ./cmd/asqli
       
       - name: Create release archives
         run: |
           cd build
           
           # Create zip archives for Windows
-          zip sqlai-windows-amd64-${{ env.VERSION }}.zip sqlai-windows-amd64.exe
+          zip asqli-windows-amd64-${{ env.VERSION }}.zip asqli-windows-amd64.exe
           
           # Create tar.gz archives for Linux and macOS
-          tar -czf sqlai-linux-amd64-${{ env.VERSION }}.tar.gz sqlai-linux-amd64
-          tar -czf sqlai-linux-arm64-${{ env.VERSION }}.tar.gz sqlai-linux-arm64
-          tar -czf sqlai-darwin-amd64-${{ env.VERSION }}.tar.gz sqlai-darwin-amd64
-          tar -czf sqlai-darwin-arm64-${{ env.VERSION }}.tar.gz sqlai-darwin-arm64
+          tar -czf asqli-linux-amd64-${{ env.VERSION }}.tar.gz asqli-linux-amd64
+          tar -czf asqli-linux-arm64-${{ env.VERSION }}.tar.gz asqli-linux-arm64
+          tar -czf asqli-darwin-amd64-${{ env.VERSION }}.tar.gz asqli-darwin-amd64
+          tar -czf asqli-darwin-arm64-${{ env.VERSION }}.tar.gz asqli-darwin-arm64
       
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          name: SQLAI v${{ env.VERSION }}
+          name: ASQLI v${{ env.VERSION }}
           draft: false
           prerelease: false
           files: |
-            build/sqlai-linux-amd64-${{ env.VERSION }}.tar.gz
-            build/sqlai-linux-arm64-${{ env.VERSION }}.tar.gz
-            build/sqlai-darwin-amd64-${{ env.VERSION }}.tar.gz
-            build/sqlai-darwin-arm64-${{ env.VERSION }}.tar.gz
-            build/sqlai-windows-amd64-${{ env.VERSION }}.zip
+            build/asqli-linux-amd64-${{ env.VERSION }}.tar.gz
+            build/asqli-linux-arm64-${{ env.VERSION }}.tar.gz
+            build/asqli-darwin-amd64-${{ env.VERSION }}.tar.gz
+            build/asqli-darwin-arm64-${{ env.VERSION }}.tar.gz
+            build/asqli-windows-amd64-${{ env.VERSION }}.zip
           body: |
-            # SQLAI v${{ env.VERSION }}
+            # ASQLI v${{ env.VERSION }}
 
             ## Installation
 
             ### Linux (x86_64)
             ```
-            tar -xzf sqlai-linux-amd64-${{ env.VERSION }}.tar.gz
-            ./sqlai-linux-amd64
+            tar -xzf asqli-linux-amd64-${{ env.VERSION }}.tar.gz
+            ./asqli-linux-amd64
             ```
 
             ### Linux (ARM64)
             ```
-            tar -xzf sqlai-linux-arm64-${{ env.VERSION }}.tar.gz
-            ./sqlai-linux-arm64
+            tar -xzf asqli-linux-arm64-${{ env.VERSION }}.tar.gz
+            ./asqli-linux-arm64
             ```
 
             ### macOS (Intel)
             ```
-            tar -xzf sqlai-darwin-amd64-${{ env.VERSION }}.tar.gz
-            ./sqlai-darwin-amd64
+            tar -xzf asqli-darwin-amd64-${{ env.VERSION }}.tar.gz
+            ./asqli-darwin-amd64
             ```
 
             ### macOS (Apple Silicon)
             ```
-            tar -xzf sqlai-darwin-arm64-${{ env.VERSION }}.tar.gz
-            ./sqlai-darwin-arm64
+            tar -xzf asqli-darwin-arm64-${{ env.VERSION }}.tar.gz
+            ./asqli-darwin-arm64
             ```
 
             ### Windows
             ```
-            # Extract the zip file and run sqlai-windows-amd64.exe
+            # Extract the zip file and run asqli-windows-amd64.exe
             ```

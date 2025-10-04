@@ -4,7 +4,7 @@ package schema
 import (
 	"context"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database"
 )
 
 // Service handles database schema extraction and caching

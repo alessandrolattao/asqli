@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/config"
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/config"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 )
 
 // buildDatabaseConfig creates a database configuration from flags

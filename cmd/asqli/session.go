@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
-	"github.com/alessandrolattao/sqlai/internal/ui/cli"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/ai"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
+	"github.com/alessandrolattao/asqli/internal/ui/cli"
 )
 
 // runQuerySession starts a query session with the specified database and AI provider

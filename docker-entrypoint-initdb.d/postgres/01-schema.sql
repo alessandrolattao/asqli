@@ -1,4 +1,4 @@
--- Create sample database schema for SQLAI testing (PostgreSQL)
+-- Create sample database schema for ASQLI testing (PostgreSQL)
 
 -- Users table
 CREATE TABLE users (

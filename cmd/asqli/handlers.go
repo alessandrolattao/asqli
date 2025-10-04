@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alessandrolattao/sqlai/internal/features/update"
+	"github.com/alessandrolattao/asqli/internal/features/update"
 )
 
 // handleVersion prints the version information
 func handleVersion() {
-	fmt.Printf("SQL AI v%s\n", Version)
+	fmt.Printf("ASQLI v%s\n", Version)
 }
 
 // handleUpdate checks for updates and installs them if available

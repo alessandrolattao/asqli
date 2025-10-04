@@ -1,9 +1,9 @@
-// Package cli provides an interactive command-line interface for SQL AI using Bubble Tea.
+// Package cli provides an interactive command-line interface for ASQLI using Bubble Tea.
 package cli
 
 import (
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/ai"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

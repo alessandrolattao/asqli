@@ -1,6 +1,6 @@
 package query
 
-import "github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
+import "github.com/alessandrolattao/asqli/internal/infrastructure/ai"
 
 // SQL represents a generated SQL query with metadata
 type SQL struct {

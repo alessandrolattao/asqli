@@ -1,12 +1,12 @@
-# Docker Setup for SQLAI Testing
+# Docker Setup for ASQLI Testing
 
 This directory contains Docker configuration for running a MySQL test database with sample data.
 
 ## Quick Start
 
-### Option 1: Run SQLAI in Docker with Watch Mode (Recommended for Development)
+### Option 1: Run ASQLI in Docker with Watch Mode (Recommended for Development)
 
-This will start both MySQL and SQLAI in containers with automatic rebuild on code changes:
+This will start both MySQL and ASQLI in containers with automatic rebuild on code changes:
 
 ```bash
 # From the project root directory
@@ -15,11 +15,11 @@ docker compose watch
 
 This will:
 - Start MySQL with sample data
-- Build and run SQLAI automatically
+- Build and run ASQLI automatically
 - Watch for file changes and rebuild instantly
-- Connect SQLAI to MySQL automatically
+- Connect ASQLI to MySQL automatically
 
-You'll see the SQLAI CLI connected to the MySQL database. Any code changes will trigger an automatic rebuild.
+You'll see the ASQLI CLI connected to the MySQL database. Any code changes will trigger an automatic rebuild.
 
 To stop:
 ```bash
@@ -27,9 +27,9 @@ To stop:
 docker compose down
 ```
 
-### Option 2: MySQL Only (Run SQLAI Locally)
+### Option 2: MySQL Only (Run ASQLI Locally)
 
-Start just the MySQL database and connect with local SQLAI:
+Start just the MySQL database and connect with local ASQLI:
 
 ```bash
 # Start MySQL only
@@ -38,14 +38,14 @@ docker compose up -d mysql
 # Wait for MySQL to be ready (about 10-30 seconds)
 docker compose logs -f mysql
 
-# Connect with local SQLAI binary
-./sqlai --dbtype mysql --host localhost --port 3306 --user testuser --password testpass --db testdb
+# Connect with local ASQLI binary
+./asqli --dbtype mysql --host localhost --port 3306 --user testuser --password testpass --db testdb
 ```
 
 Or using connection string:
 
 ```bash
-./sqlai --dbtype mysql --connection "testuser:testpass@tcp(localhost:3306)/testdb"
+./asqli --dbtype mysql --connection "testuser:testpass@tcp(localhost:3306)/testdb"
 ```
 
 ### Sample Queries to Try
@@ -110,17 +110,17 @@ docker compose logs -f
 # View MySQL logs only
 docker compose logs -f mysql
 
-# View SQLAI logs only
-docker compose logs -f sqlai
+# View ASQLI logs only
+docker compose logs -f asqli
 
 # Access MySQL CLI
 docker compose exec mysql mysql -u testuser -ptestpass testdb
 
-# Rebuild SQLAI container
-docker compose build sqlai
+# Rebuild ASQLI container
+docker compose build asqli
 
-# Run SQLAI interactively
-docker compose run --rm sqlai
+# Run ASQLI interactively
+docker compose run --rm asqli
 ```
 
 ## Data Persistence

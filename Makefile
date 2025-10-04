@@ -41,12 +41,12 @@ logs:
 
 # Help
 help:
-	@echo "SQLAI Development Makefile"
+	@echo "ASQLI Development Makefile"
 	@echo ""
 	@echo "Commands:"
 	@echo "  make up        - Start MySQL and PostgreSQL databases"
-	@echo "  make mysql     - Start MySQL and connect with SQLAI"
-	@echo "  make postgres  - Start PostgreSQL and connect with SQLAI"
+	@echo "  make mysql     - Start MySQL and connect with ASQLI"
+	@echo "  make postgres  - Start PostgreSQL and connect with ASQLI"
 	@echo "  make down      - Stop all services"
 	@echo "  make clean     - Stop services and remove all data"
 	@echo "  make logs      - Show database logs"

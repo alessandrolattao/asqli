@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alessandrolattao/sqlai/internal/features/execution"
-	"github.com/alessandrolattao/sqlai/internal/features/query"
-	"github.com/alessandrolattao/sqlai/internal/features/schema"
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database"
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
+	"github.com/alessandrolattao/asqli/internal/features/execution"
+	"github.com/alessandrolattao/asqli/internal/features/query"
+	"github.com/alessandrolattao/asqli/internal/features/schema"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/ai"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

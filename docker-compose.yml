@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: sqlai-mysql
+    container_name: asqli-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -29,11 +29,11 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - sqlai-network
+      - asqli-network
 
   postgres:
     image: postgres:16-alpine
-    container_name: sqlai-postgres
+    container_name: asqli-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: testdb
@@ -50,11 +50,11 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - sqlai-network
+      - asqli-network
 
-  sqlai:
+  asqli:
     image: golang:1.25-alpine
-    container_name: sqlai-app
+    container_name: asqli-app
     depends_on:
       mysql:
         condition: service_healthy
@@ -86,7 +86,7 @@ services:
         "testdb",
       ]
     networks:
-      - sqlai-network
+      - asqli-network
     profiles:
       - manual
 
@@ -95,4 +95,4 @@ volumes:
   postgres_data:
 
 networks:
-  sqlai-network:
+  asqli-network:

@@ -40,7 +40,7 @@ func ParseFlags() *Flags {
 	f := &Flags{}
 
 	// Command flags
-	flag.BoolVar(&f.Version, "version", false, "Print the version of sqlai")
+	flag.BoolVar(&f.Version, "version", false, "Print the version of asqli")
 	flag.BoolVar(&f.Update, "update", false, "Check for updates and update to the latest version")
 
 	// AI Provider

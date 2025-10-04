@@ -5,7 +5,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 )
 
 // Re-export types from adapters for convenience

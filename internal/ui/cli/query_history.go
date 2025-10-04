@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
+import "github.com/alessandrolattao/asqli/internal/infrastructure/ai"
 
 // QueryHistory represents a completed query with its prompt, SQL, and debug information
 type QueryHistory struct {

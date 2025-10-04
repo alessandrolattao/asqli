@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 )
 
 // init registers all built-in database adapters

@@ -1,4 +1,4 @@
-// Package update provides self-update functionality for the sqlai binary.
+// Package update provides self-update functionality for the asqli binary.
 package update
 
 import (
@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	githubRepo = "alessandrolattao/sqlai"
+	githubRepo = "alessandrolattao/asqli"
 	apiURL     = "https://api.github.com/repos/" + githubRepo + "/releases/latest"
 	timeout    = 30 * time.Second
 )
@@ -160,7 +160,7 @@ func getAssetName(version string) string {
 		ext = ".tar.gz"
 	}
 
-	return fmt.Sprintf("sqlai-%s-%s-%s%s", runtime.GOOS, runtime.GOARCH, version, ext)
+	return fmt.Sprintf("asqli-%s-%s-%s%s", runtime.GOOS, runtime.GOARCH, version, ext)
 }
 
 // downloadFile downloads a file from a URL and returns the path to the temporary file
@@ -186,7 +186,7 @@ func downloadFile(ctx context.Context, url string) (tmpPath string, err error) {
 		return "", fmt.Errorf("download failed with status %d", resp.StatusCode)
 	}
 
-	tmpFile, createErr := os.CreateTemp("", "sqlai-update-*")
+	tmpFile, createErr := os.CreateTemp("", "asqli-update-*")
 	if createErr != nil {
 		return "", fmt.Errorf("failed to create temp file: %w", createErr)
 	}
@@ -218,7 +218,7 @@ func downloadFile(ctx context.Context, url string) (tmpPath string, err error) {
 
 // extractBinary extracts the binary from the downloaded archive
 func extractBinary(archivePath, version string) (string, error) {
-	binaryName := fmt.Sprintf("sqlai-%s-%s", runtime.GOOS, runtime.GOARCH)
+	binaryName := fmt.Sprintf("asqli-%s-%s", runtime.GOOS, runtime.GOARCH)
 	if runtime.GOOS == "windows" {
 		binaryName += ".exe"
 		return extractFromZip(archivePath, binaryName)
@@ -260,7 +260,7 @@ func extractFromTarGz(archivePath, fileName string) (tmpPath string, err error) 
 		}
 
 		if header.Name == fileName || filepath.Base(header.Name) == fileName {
-			tmpFile, createErr := os.CreateTemp("", "sqlai-binary-*")
+			tmpFile, createErr := os.CreateTemp("", "asqli-binary-*")
 			if createErr != nil {
 				return "", fmt.Errorf("failed to create temp file: %w", createErr)
 			}
@@ -321,7 +321,7 @@ func extractFromZip(archivePath, fileName string) (tmpPath string, err error) {
 				return "", fmt.Errorf("failed to open file from zip: %w", openErr)
 			}
 
-			tmpFile, createErr := os.CreateTemp("", "sqlai-binary-*.exe")
+			tmpFile, createErr := os.CreateTemp("", "asqli-binary-*.exe")
 			if createErr != nil {
 				if closeErr := rc.Close(); closeErr != nil {
 					return "", fmt.Errorf("failed to close zip entry: %w (create error: %v)", closeErr, createErr)
@@ -393,7 +393,7 @@ func replaceBinary(newBinaryPath string) (err error) {
 
 	// Create a temporary file in the same directory as the target
 	// This ensures the temp file is on the same filesystem for atomic rename
-	tmpFile, createErr := os.CreateTemp(exeDir, ".sqlai-update-*")
+	tmpFile, createErr := os.CreateTemp(exeDir, ".asqli-update-*")
 	if createErr != nil {
 		return fmt.Errorf("failed to create temp file in target directory: %w", createErr)
 	}

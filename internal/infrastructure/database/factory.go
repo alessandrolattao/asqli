@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/database/adapters"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/database/adapters"
 )
 
 // AdapterFactory is a function that creates a new adapter instance

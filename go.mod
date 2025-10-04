@@ -1,4 +1,4 @@
-module github.com/alessandrolattao/sqlai
+module github.com/alessandrolattao/asqli
 
 go 1.25
 

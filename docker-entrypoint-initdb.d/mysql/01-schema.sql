@@ -1,4 +1,4 @@
--- Create sample database schema for SQLAI testing
+-- Create sample database schema for ASQLI testing
 
 -- Users table
 CREATE TABLE users (

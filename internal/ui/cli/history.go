@@ -13,7 +13,7 @@ func loadHistory() []string {
 		return []string{}
 	}
 
-	historyFile := filepath.Join(homeDir, ".sqlai_history")
+	historyFile := filepath.Join(homeDir, ".asqli_history")
 	data, err := os.ReadFile(historyFile)
 	if err != nil {
 		return []string{}
@@ -38,7 +38,7 @@ func saveHistory(history []string) error {
 		return err
 	}
 
-	historyFile := filepath.Join(homeDir, ".sqlai_history")
+	historyFile := filepath.Join(homeDir, ".asqli_history")
 	data := strings.Join(history, "\n")
 	return os.WriteFile(historyFile, []byte(data), 0600)
 }

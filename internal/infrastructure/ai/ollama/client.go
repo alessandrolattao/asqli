@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/alessandrolattao/sqlai/internal/infrastructure/ai"
+	"github.com/alessandrolattao/asqli/internal/infrastructure/ai"
 	"github.com/ollama/ollama/api"
 )
 

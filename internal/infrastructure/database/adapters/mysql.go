@@ -117,19 +117,24 @@ func (a *MySQLAdapter) GetTableDefinition(ctx context.Context, db *sql.DB, table
 
 	// Get constraints (foreign keys)
 	constraintsQuery := `
-		SELECT
-			CONSTRAINT_NAME,
-			CONSTRAINT_TYPE,
+		SELECT DISTINCT
+			tc.CONSTRAINT_NAME,
+			tc.CONSTRAINT_TYPE,
 			'' AS constraint_definition,
-			REFERENCED_TABLE_NAME
+			COALESCE(kcu.REFERENCED_TABLE_NAME, '') AS REFERENCED_TABLE_NAME
 		FROM
-			INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+			INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+		LEFT JOIN
+			INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+			ON tc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
+			AND tc.TABLE_SCHEMA = kcu.TABLE_SCHEMA
+			AND tc.TABLE_NAME = kcu.TABLE_NAME
 		WHERE
-			TABLE_SCHEMA = DATABASE() AND
-			TABLE_NAME = ? AND
-			CONSTRAINT_TYPE != 'CHECK'
+			tc.TABLE_SCHEMA = DATABASE() AND
+			tc.TABLE_NAME = ? AND
+			tc.CONSTRAINT_TYPE != 'CHECK'
 		ORDER BY
-			CONSTRAINT_TYPE
+			tc.CONSTRAINT_TYPE
 	`
 
 	constraintRows, err := db.QueryContext(ctx, constraintsQuery, tableName)

@@ -79,7 +79,11 @@ func (s *Service) Generate(ctx context.Context, prompt, schema string, queryHist
 
 	// Validate generated SQL
 	if err := s.Validate(resp.Query); err != nil {
-		return nil, err
+		// Return ValidationError that includes the invalid query
+		return nil, &ValidationError{
+			Query: resp.Query,
+			Err:   err,
+		}
 	}
 
 	return &SQL{
@@ -99,7 +103,12 @@ func (s *Service) Validate(query string) error {
 
 	// Basic SQL validation (can be extended)
 	upper := strings.ToUpper(trimmed)
-	validStarts := []string{"SELECT", "INSERT", "UPDATE", "DELETE", "WITH", "CREATE", "ALTER", "DROP"}
+	validStarts := []string{
+		"SELECT", "INSERT", "UPDATE", "DELETE", "WITH",
+		"CREATE", "ALTER", "DROP", "TRUNCATE",
+		"SHOW", "DESCRIBE", "DESC", "EXPLAIN",
+		"SET", "USE",
+	}
 
 	for _, start := range validStarts {
 		if strings.HasPrefix(upper, start) {
@@ -113,7 +122,11 @@ func (s *Service) Validate(query string) error {
 // IsDangerous checks if a query might modify data
 func (s *Service) IsDangerous(query string) bool {
 	trimmed := strings.TrimSpace(strings.ToUpper(query))
-	dangerousStarts := []string{"INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "TRUNCATE"}
+	dangerousStarts := []string{
+		"INSERT", "UPDATE", "DELETE",
+		"DROP", "ALTER", "CREATE", "TRUNCATE",
+		"SET", "USE",
+	}
 
 	for _, start := range dangerousStarts {
 		if strings.HasPrefix(trimmed, start) {

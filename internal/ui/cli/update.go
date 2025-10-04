@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/alessandrolattao/asqli/internal/features/query"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -256,6 +258,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentResult = nil
 			m.table = nil
 			m.statusMessage = "✗ " + msg.err.Error()
+
+			// Extract query from ValidationError if available
+			var validationErr *query.ValidationError
+			if errors.As(msg.err, &validationErr) {
+				m.generatedSQL = validationErr.Query
+			}
+
 			m.state = stateReady
 			return m, nil
 		}
